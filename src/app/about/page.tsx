@@ -284,6 +284,81 @@ export default function AboutPage() {
               </div>
             </div>
 
+            {/* Support & Resources */}
+            <div style={{
+              background: 'var(--pastel-yellow)',
+              border: '2px solid var(--pastel-yellow-dark)',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+            }}>
+              <h2 style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: 'var(--accent-yellow)',
+                marginBottom: '1rem'
+              }}>
+                Support & Resources
+              </h2>
+              <div style={{
+                color: 'var(--text-secondary)',
+                fontSize: '1.0625rem',
+                lineHeight: '1.8',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>Support:</strong>{' '}
+                  <a 
+                    href="https://strostudio.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: 'var(--accent-blue)', 
+                      textDecoration: 'none',
+                      borderBottom: '1px solid var(--accent-blue)'
+                    }}
+                  >
+                    https://strostudio.com
+                  </a>
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>GitHub:</strong>{' '}
+                  <a 
+                    href="https://github.com/papayaah/whenimsick" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: 'var(--accent-blue)', 
+                      textDecoration: 'none',
+                      borderBottom: '1px solid var(--accent-blue)'
+                    }}
+                  >
+                    https://github.com/papayaah/whenimsick
+                  </a>
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>Follow me on X:</strong>{' '}
+                  <a 
+                    href="https://x.com/papayaahtries" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: 'var(--accent-blue)', 
+                      textDecoration: 'none',
+                      borderBottom: '1px solid var(--accent-blue)'
+                    }}
+                  >
+                    @papayaahtries
+                  </a>
+                </p>
+              </div>
+            </div>
+
             {/* Call to Action */}
             <div style={{
               background: 'linear-gradient(135deg, var(--pastel-peach) 0%, var(--pastel-coral) 100%)',
