@@ -23,13 +23,13 @@ const barrio = Barrio({
 });
 
 export const metadata: Metadata = {
-  title: "When I'm Sick - Chrome AI Symptom Tracker",
+  title: "When I'm Sick - Built-in Chrome AI Symptom Tracker",
   description:
     "Track your symptoms and get AI-powered health insights using Chrome's built-in AI. Free, private, and secure health tracking with intelligent analysis.",
   keywords: [
     "symptom tracker",
     "health tracking",
-    "Chrome AI",
+    "Built-in Chrome AI",
     "medical diary",
     "health insights",
     "symptom analysis",
@@ -57,21 +57,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://whenimsick.com',
     siteName: "When I'm Sick",
-    title: "When I'm Sick - Chrome AI Symptom Tracker",
+    title: "When I'm Sick - Built-in Chrome AI Symptom Tracker",
     description: "Track your symptoms and get AI-powered health insights using Chrome's built-in AI. Free, private, and secure health tracking with intelligent analysis.",
     images: [
       {
-        url: '/logotitle.jpeg',
+        url: '/screenshots/whenimsick.png',
         width: 1200,
         height: 630,
-        alt: "When I'm Sick - Chrome AI Symptom Tracker",
-        type: 'image/jpeg',
-      },
-      {
-        url: '/herobg.jpeg',
-        width: 1200,
-        height: 630,
-        alt: "When I'm Sick - Health Tracking Dashboard",
+        alt: "When I'm Sick - Built-in Chrome AI Symptom Tracker",
         type: 'image/jpeg',
       }
     ],
@@ -80,9 +73,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@whenimsick',
     creator: '@whenimsick',
-    title: "When I'm Sick - Chrome AI Symptom Tracker",
+    title: "When I'm Sick - Built-in Chrome AI Symptom Tracker",
     description: "Track your symptoms and get AI-powered health insights using Chrome's built-in AI. Free, private, and secure health tracking.",
-    images: ['/logotitle.jpeg'],
+    images: ['/screenshots/whenimsick.png'],
   },
   icons: {
     icon: '/favicon.png',
@@ -117,7 +110,7 @@ export default function RootLayout({
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "When I'm Sick - Chrome AI Symptom Tracker",
+    "name": "When I'm Sick - Built-in Chrome AI Symptom Tracker",
     "description": "Track your symptoms and get AI-powered health insights using Chrome's built-in AI. Free, private, and secure health tracking with intelligent analysis.",
     "url": "https://whenimsick.com",
     "applicationCategory": "HealthApplication",
@@ -133,9 +126,9 @@ export default function RootLayout({
       "Medical Term Glossary",
       "Health Timeline",
       "Privacy-First Design",
-      "Chrome AI Integration"
+      "Built-in Chrome AI Integration"
     ],
-    "screenshot": "https://whenimsick.com/herobg.jpeg",
+    "screenshot": "https://whenimsick.com/screenshots/whenimsick.png",
     "author": {
       "@type": "Organization",
       "name": "When I'm Sick Team"
@@ -191,11 +184,16 @@ export default function RootLayout({
               zIndex: 1000,
               border: '2px solid rgba(255, 255, 255, 0.2)',
               textAlign: 'center',
-              lineHeight: '1.2',
+              lineHeight: '1.4',
               fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
             }}
           >
-            Alpha
+            <div>
+              Alpha <span style={{ fontSize: '9px', fontWeight: '400' }}>v0.1</span>
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: '400', textTransform: 'none', letterSpacing: '0.3px' }}>
+              Still Making It Better
+            </div>
           </div>
           
           <LegalGate>
