@@ -288,7 +288,7 @@ export async function checkChromeAIAvailability(): Promise<ChromeAIStatus> {
       available: false,
       status: 'Chrome LanguageModel not detected',
       instructions:
-        'Use Chrome Canary and enable chrome://flags/#prompt-api-for-gemini-nano, then restart the browser',
+        'Use Chrome and enable chrome://flags/#prompt-api-for-gemini-nano, then restart the browser',
       languageModelAvailable: false,
     };
   }
@@ -326,7 +326,7 @@ export async function checkChromeAIAvailability(): Promise<ChromeAIStatus> {
           available: false,
           status: 'Chrome AI not supported on this device',
           instructions:
-            'Chrome AI requires a supported device and Chrome Canary with flags enabled',
+            'Chrome AI requires a supported device and Chrome with flags enabled',
           languageModelAvailable: false,
         };
         break;
@@ -335,7 +335,7 @@ export async function checkChromeAIAvailability(): Promise<ChromeAIStatus> {
           available: false,
           status: `Chrome AI status: ${availability}`,
           instructions:
-            'Enable chrome://flags/#prompt-api-for-gemini-nano in Chrome Canary',
+            'Enable chrome://flags/#prompt-api-for-gemini-nano in Chrome',
           languageModelAvailable: false,
         };
         break;
@@ -351,7 +351,7 @@ export async function checkChromeAIAvailability(): Promise<ChromeAIStatus> {
       available: false,
       status: 'Error checking Chrome AI availability',
       instructions:
-        'Ensure Chrome Canary is being used with the required flags enabled',
+        'Ensure Chrome is being used with the required flags enabled',
       languageModelAvailable: false,
     };
     

@@ -2,7 +2,19 @@
 
 A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze symptoms and provide health insights. **Completely offline and private.**
 
-## What It Does
+### Screenshots
+
+<div align="center">
+  <img src="public/screenshots/desktop-symptoms.jpg" alt="Symptom Selection" width="48%" />
+  <img src="public/screenshots/desktop-result.jpg" alt="AI Analysis Results" width="48%" />
+</div>
+
+<div align="center">
+  <img src="public/screenshots/desktop-episodes.jpg" alt="Episode Tracking" width="48%" />
+  <img src="public/screenshots/desktop-glossary.jpg" alt="Medical Glossary" width="48%" />
+</div>
+
+### What It Does
 
 - **Track Symptoms**: Select from common/uncommon symptoms with severity levels
 - **AI Analysis**: Get instant analysis using Chrome's local AI (no data sent anywhere)
@@ -10,11 +22,14 @@ A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze sympto
 - **Episode Tracking**: Multi-day illness progression with trend analysis
 - **Medical Glossary**: Interactive tooltips for medical terms
 
-## Quick Start
+### Quick Start
 
-1. **Setup Chrome Canary**:
-   - Install Chrome Canary
-   - Enable flags: `#prompt-api-for-gemini-nano` and `#optimization-guide-on-device-model`
+1. **Setup Chrome**:
+   - Install Chrome (version 127 or later)
+   - Enable the following flags in `chrome://flags`:
+     - `#prompt-api-for-gemini-nano` → **Enabled**
+     - `#prompt-api-for-gemini-nano-multimodal-input` → **Enabled**
+     - `#optimization-guide-on-device-model` → **Enabled BypassPerfRequirement**
    - Restart browser
 
 2. **Run the app**:
@@ -22,9 +37,9 @@ A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze sympto
    npm install
    npm run dev
    ```
-   Open http://localhost:3000 in Chrome Canary
+   Open http://localhost:3000 in Chrome
 
-## Tech Stack
+### Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS 4
@@ -32,16 +47,16 @@ A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze sympto
 - **Storage**: LocalStorage (no external APIs)
 - **Icons**: React Icons
 
-## Features
+### Features
 
-- 🏥 Symptom selection with severity tracking
-- 🤖 Chrome AI-powered analysis (offline)
-- 📊 Multi-day episode progression
-- 📚 Interactive medical term tooltips
-- 📱 Responsive design
-- 🔒 100% private (no data leaves your device)
+- Symptom selection with severity tracking
+- Chrome AI-powered analysis (offline)
+- Multi-day episode progression
+- Interactive medical term tooltips
+- Responsive design
+- 100% private (no data leaves your device)
 
-## Project Structure
+### Project Structure
 
 ```
 src/
@@ -52,6 +67,6 @@ src/
 └── types/              # TypeScript definitions
 ```
 
-## Disclaimer
+### Disclaimer
 
-⚠️ **For educational purposes only. Not medical advice. Consult healthcare professionals for medical concerns.**
+**For educational purposes only. Not medical advice. Consult healthcare professionals for medical concerns.**
