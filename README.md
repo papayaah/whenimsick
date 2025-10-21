@@ -4,15 +4,15 @@ A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze sympto
 
 ### Screenshots
 
-<div align="center">
-  <img src="public/screenshots/desktop-symptoms.jpg" alt="Symptom Selection" width="48%" />
-  <img src="public/screenshots/desktop-result.jpg" alt="AI Analysis Results" width="48%" />
-</div>
+| | |
+|---|---|
+| <img src="public/screenshots/desktop-symptoms.jpg" alt="Symptom Selection" width="100%" /> | <img src="public/screenshots/desktop-result.jpg" alt="AI Analysis Results" width="100%" /> |
+|Symptom Selection|AI Analysis Results|
 
-<div align="center">
-  <img src="public/screenshots/desktop-episodes.jpg" alt="Episode Tracking" width="48%" />
-  <img src="public/screenshots/desktop-glossary.jpg" alt="Medical Glossary" width="48%" />
-</div>
+| | |
+|---|---|
+| <img src="public/screenshots/desktop-episodes.jpg" alt="Episode Tracking" width="100%" /> | <img src="public/screenshots/desktop-glossary.jpg" alt="Medical Glossary" width="100%" /> |
+|Episode Tracking|Medical Glossary|
 
 ### What It Does
 
