@@ -7,7 +7,7 @@ A Next.js web app that uses Chrome's built-in AI (Gemini Nano) to analyze sympto
 ### Demo
 
 <div align="center">
-  <img src="public/whenimsick-demo.gif" alt="When I'm Sick Demo" width="100%" />
+  <img src="public/whenimsick-demo.gif" alt="When I'm Sick Demo" />
 </div>
 
 ### Screenshots
