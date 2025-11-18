@@ -1,7 +1,8 @@
-// AI Setup Status Service - tracks whether Chrome AI is set up and ready
+// AI Setup Status Service - tracks whether AI (Chrome or Gemini) is set up and ready
 class AISetupService {
   private static instance: AISetupService | null = null;
-  private readonly SETUP_KEY = 'chromeai_setup_complete';
+  private readonly SETUP_KEY = 'ai_setup_complete';
+  private readonly PROVIDER_KEY = 'ai_provider';
 
   private constructor() {}
 
@@ -13,7 +14,7 @@ class AISetupService {
   }
 
   /**
-   * Check if Chrome AI is already set up and ready
+   * Check if AI is already set up and ready
    */
   isAISetup(): boolean {
     if (typeof window === 'undefined') return false;
@@ -27,15 +28,30 @@ class AISetupService {
   }
 
   /**
-   * Mark Chrome AI as set up and ready
+   * Mark AI as set up and ready
    */
-  markAISetup(): void {
+  markAISetup(provider: 'chrome' | 'gemini' = 'chrome'): void {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(this.SETUP_KEY, 'true');
-      console.log('Chrome AI marked as set up');
+      localStorage.setItem(this.PROVIDER_KEY, provider);
+      console.log(`${provider === 'chrome' ? 'Chrome AI' : 'Gemini AI'} marked as set up`);
     } catch (error) {
       console.error('Failed to mark AI as set up:', error);
+    }
+  }
+
+  /**
+   * Get the current AI provider
+   */
+  getProvider(): 'chrome' | 'gemini' | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const provider = localStorage.getItem(this.PROVIDER_KEY);
+      return provider as 'chrome' | 'gemini' | null;
+    } catch (error) {
+      console.error('Failed to get AI provider:', error);
+      return null;
     }
   }
 
@@ -46,6 +62,7 @@ class AISetupService {
     if (typeof window === 'undefined') return;
     try {
       localStorage.removeItem(this.SETUP_KEY);
+      localStorage.removeItem(this.PROVIDER_KEY);
       console.log('AI setup status reset');
     } catch (error) {
       console.error('Failed to reset AI setup status:', error);

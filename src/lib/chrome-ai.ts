@@ -9,7 +9,7 @@ interface ChromeAIStatus {
 }
 
 const SYMPTOM_ANALYSIS_PROMPT = `Analyze the symptoms and respond with only valid JSON in this format:
-{"dailySummary":"Brief summary","analysis":"Educational info","informationNotes":["Note 1","Note 2"],"severity":"low","medicalConsultationSuggested":false,"reasonForConsultation":"","selfCareTips":["Tip 1","Tip 2"],"estimatedRecoveryWindow":"timeframe","followUpQuestion":"question","episodeTitle":"Personalized episode title based on user's symptoms and notes","medicalTerms":[{"term":"medical term","definition":"simple explanation"}]}
+{"dailySummary":"Brief summary","analysis":"Educational info","analysisCitations":[{"source":"Mayo Clinic","title":"Source Title","url":"https://example.com","year":"2024"}],"informationNotes":["Note 1","Note 2"],"educationalCitations":[[{"source":"WebMD","title":"Source","url":"https://example.com","year":"2024"}],[{"source":"CDC","title":"Source","url":"https://example.com","year":"2024"}]],"severity":"low","medicalConsultationSuggested":false,"reasonForConsultation":"","selfCareTips":["Tip 1","Tip 2"],"selfCareCitations":[[{"source":"Mayo Clinic","title":"Self-Care Guide","url":"https://example.com","year":"2024"}]],"estimatedRecoveryWindow":"timeframe","followUpQuestion":"question","episodeTitle":"Personalized episode title based on user's symptoms and notes","medicalTerms":[{"term":"medical term","definition":"simple explanation"}]}
 
 CRITICAL WRITING STYLE:
 - Write your analysis using SIMPLE, EVERYDAY language that patients understand
@@ -25,7 +25,14 @@ MEDICAL TERMS ARRAY:
 - Include medical terminology for whatever symptoms, conditions, medications, and concepts you mention in your analysis
 - For each term provide: {"term": "Medical Term", "definition": "Simple patient-friendly explanation"}
 - Choose terms that help educate the patient about their specific condition
-- The system will automatically create interactive tooltips for these terms`;
+- The system will automatically create interactive tooltips for these terms
+
+CITATIONS:
+- analysisCitations: 2-3 credible sources for your analysis (Mayo Clinic, WebMD, medical journals)
+- educationalCitations: Array of citation arrays, one per informationNote (can be empty arrays if no specific source)
+- selfCareCitations: Array of citation arrays, one per selfCareTip (can be empty arrays if no specific source)
+- Use real, accessible URLs from reputable medical sources
+- Format: {"source":"Organization","title":"Article Title","url":"https://url","year":"2024"}`;
 
 const EPISODE_PROGRESSION_PROMPT = `You are a medical education specialist analyzing a multi-day illness progression. Provide specific, personalized medical education.
 
@@ -42,7 +49,9 @@ You MUST respond with valid JSON in this exact format:
 {
   "dailySummary": "One sentence about today's symptoms in context (e.g., 'Day 2 shows your headache improving while new congestion appears')",
   "analysis": "Specific educational explanation of what this person's exact symptom progression typically indicates, referencing their timeline and descriptions",
+  "analysisCitations": [{"source":"Mayo Clinic","title":"Source Title","url":"https://example.com","year":"2024"}],
   "informationNotes": ["Specific medical fact about this progression pattern", "Educational information about how these symptoms typically evolve"],
+  "educationalCitations": [[{"source":"WebMD","title":"Source","url":"https://example.com","year":"2024"}],[{"source":"CDC","title":"Source","url":"https://example.com","year":"2024"}]],
   "severity": "low|moderate|high",
   "medicalConsultationSuggested": true|false,
   "reasonForConsultation": "Specific reason based on this progression pattern",
@@ -56,13 +65,10 @@ You MUST respond with valid JSON in this exact format:
   "dayNumber": 2,
   "progressionSummary": "One sentence describing this person's illness arc using their own descriptions",
   "selfCareTips": ["First specific self-care tip", "Second actionable recommendation", "Third practical care tip"],
+  "selfCareCitations": [[{"source":"Mayo Clinic","title":"Self-Care Guide","url":"https://example.com","year":"2024"}]],
   "estimatedRecoveryWindow": "Realistic recovery timeline based on this specific progression pattern",
   "followUpQuestion": "Relevant monitoring question about symptom changes or progression",
-  "medicalTerms": [{"term": "medical term", "definition": "simple explanation"}],
-  "citations": [
-    {"title": "Source Title", "url": "https://example.com", "description": "Brief description of what this source covers"},
-    {"title": "Another Source", "url": "https://example2.com", "description": "Brief description of what this source covers"}
-  ]
+  "medicalTerms": [{"term": "medical term", "definition": "simple explanation"}]
 }
 
 CRITICAL WRITING STYLE:
@@ -81,12 +87,12 @@ MEDICAL TERMS ARRAY:
 - Choose terms that help educate the patient about their specific condition
 - The system will automatically create interactive tooltips for these terms
 
-CITATIONS ARRAY:
-- Provide 2-4 credible medical sources that support your analysis
-- Include reputable sources like Mayo Clinic, WebMD, CDC, NIH, medical journals, or peer-reviewed articles
-- For each citation provide: {"title": "Source Title", "url": "https://actual-url.com", "description": "Brief description of what this source covers"}
-- Focus on sources that specifically relate to the symptoms and conditions you're discussing
-- Ensure URLs are real and accessible
+CITATIONS:
+- analysisCitations: 2-3 credible sources for your analysis (Mayo Clinic, WebMD, medical journals)
+- educationalCitations: Array of citation arrays, one per informationNote (can be empty arrays if no specific source)
+- selfCareCitations: Array of citation arrays, one per selfCareTip (can be empty arrays if no specific source)
+- Use real, accessible URLs from reputable medical sources
+- Format: {"source":"Organization","title":"Article Title","url":"https://url","year":"2024"}
 
 TREND ANALYSIS:
 - "improving" = fewer/milder symptoms, user's descriptions indicate feeling better
@@ -112,7 +118,7 @@ class SymptomAnalyzer {
         availability: (config: unknown) => Promise<string>;
         create: (config: unknown) => Promise<{ prompt: (text: string) => Promise<string>; destroy: () => void }>;
       };
-      
+
       // Check availability with proper language settings
       const availability = await LanguageModel.availability({
         expectedInputs: [
@@ -165,6 +171,9 @@ class SymptomAnalyzer {
     followUpQuestion: string;
     episodeTitle?: string;
     medicalTerms: Array<{ term: string; definition: string }>;
+    analysisCitations?: Array<{ source: string; title: string; url: string; year: string }>;
+    educationalCitations?: Array<Array<{ source: string; title: string; url: string; year: string }>>;
+    selfCareCitations?: Array<Array<{ source: string; title: string; url: string; year: string }>>;
     trend?: 'improving' | 'stable' | 'worsening';
     dayNumber?: number;
     progressionSummary?: string;
@@ -174,7 +183,6 @@ class SymptomAnalyzer {
       ongoing: string[];
       severity_changes: string[];
     };
-    citations?: Array<{ title: string; url: string; description: string }>;
   }> {
     console.log('Starting symptom analysis for:', symptoms);
 
@@ -354,7 +362,7 @@ export async function checkChromeAIAvailability(): Promise<ChromeAIStatus> {
         'Ensure Chrome is being used with the required flags enabled',
       languageModelAvailable: false,
     };
-    
+
     // Cache error result for shorter duration (5 seconds)
     aiAvailabilityCache = { status: errorResult, timestamp: Date.now() - CACHE_DURATION + 5000 };
     globalAIStatus = errorResult;

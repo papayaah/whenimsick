@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import SymptomSelector, { UncommonSymptomsColumn } from '@/components/SymptomSelector';
 import DatePicker from '@/components/DatePicker';
 import MedicalTextProcessor from '@/components/MedicalTextProcessor';
-import { symptomAnalyzer } from '@/lib/chrome-ai';
+import { aiService } from '@/lib/ai-service';
 import { aiSetupService } from '@/services/aiSetupService';
 import { FiLoader } from 'react-icons/fi';
 import { emitDemoState } from '@/lib/demoState';
@@ -91,10 +91,10 @@ export default function SymptomTracker() {
   const [optionalValues, setOptionalValues] = useState<
     Record<string, Record<string, string>>
   >({});
-  
+
   // Uncommon symptoms state
   const [showUncommonSymptoms, setShowUncommonSymptoms] = useState(false);
-  
+
   // Demo episode view state
 
   // Check AI setup status on mount
@@ -110,12 +110,20 @@ export default function SymptomTracker() {
         return;
       }
 
-      // If we reach here, AI is set up - initialize the analyzer
+      // If we reach here, AI is set up - initialize the AI service
       try {
-        await symptomAnalyzer.initialize();
-        setAiAvailable(true);
-        setIsCheckingSetup(false);
-        emitDemoState({ isActive: false });
+        const status = await aiService.initialize();
+        if (status.available) {
+          setAiAvailable(true);
+          setIsCheckingSetup(false);
+          emitDemoState({ isActive: false });
+          console.log(`✅ Using ${status.provider === 'gemini' ? 'Gemini API' : 'Chrome AI'}`);
+        } else {
+          console.warn('AI not available:', status.status);
+          // If initialization fails, reset setup status and redirect to setup
+          aiSetupService.resetAISetup();
+          router.replace('/setup');
+        }
       } catch (error) {
         console.error('Failed to initialize AI:', error);
         // If initialization fails, reset setup status and redirect to setup
@@ -213,8 +221,8 @@ export default function SymptomTracker() {
           )) || undefined;
       }
 
-      // Analyze symptoms with episode context
-      const result = await symptomAnalyzer.analyzeSymptoms(
+      // Analyze symptoms with episode context using unified AI service
+      const result = await aiService.analyzeSymptoms(
         symptomNames,
         notes,
         episodeContext
@@ -334,12 +342,12 @@ export default function SymptomTracker() {
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <FiLoader 
-          size={32} 
-          style={{ 
+        <FiLoader
+          size={32}
+          style={{
             color: 'var(--accent-coral)',
             animation: 'spin 1s linear infinite'
-          }} 
+          }}
         />
         <div style={{ fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
           Checking AI setup...
@@ -349,9 +357,9 @@ export default function SymptomTracker() {
   }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
       background: 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)',
       height: '100%',
       minHeight: '100vh',
@@ -361,7 +369,7 @@ export default function SymptomTracker() {
       {/* Regular Tracker Content */}
       <>
         {/* Dynamic Multi-Column Layout */}
-          <div className='symptoms-layout' style={{ 
+          <div className='symptoms-layout' style={{
             display: 'grid',
             gridTemplateColumns: (() => {
               // If analysis results are shown, hide all form columns
@@ -524,10 +532,10 @@ export default function SymptomTracker() {
                         >
                           Rate severity (Optional)
                         </p>
-                        
+
                         {getSymptomsWithDetails().length === 0 ? (
-                          <p style={{ 
-                            fontSize: '0.8125rem', 
+                          <p style={{
+                            fontSize: '0.8125rem',
                             color: 'var(--text-muted)',
                             fontStyle: 'italic',
                             padding: '0.5rem',
@@ -544,7 +552,7 @@ export default function SymptomTracker() {
                                 const currentSelection = optionalValues[symptom.id]?.[field.type];
 
                                 return (
-                                  <div 
+                                  <div
                                     key={`${symptom.id}-${fieldIndex}`}
                                     style={{
                                       padding: '0.625rem',
@@ -717,21 +725,21 @@ export default function SymptomTracker() {
             )}
 
             {/* Right Panel - Analysis Results */}
-            <div className='analysis-panel' style={{ 
+            <div className='analysis-panel' style={{
               background: 'white',
-              padding: analysisResult ? '2rem' : 0 
+              padding: analysisResult ? '2rem' : 0
             }}>
               {analysisResult ? (
-                <div className='analysis-results' style={{ 
+                <div className='analysis-results' style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 0,
                   height: '100%'
                 }}>
                   {/* Header */}
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '2rem',
                     paddingBottom: '1rem',
@@ -739,8 +747,8 @@ export default function SymptomTracker() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <MdAutoAwesome size={28} style={{ color: 'var(--accent-pink)' }} />
-                      <h2 style={{ 
-                        fontSize: '1.75rem', 
+                      <h2 style={{
+                        fontSize: '1.75rem',
                         margin: 0,
                         fontWeight: '700',
                         color: 'var(--text-primary)'
@@ -773,24 +781,24 @@ export default function SymptomTracker() {
                       {/* Episode Info */}
                       {analysisResult.episodeInfo && (
                         <div style={{
-                          background: analysisResult.episodeInfo.isNewEpisode 
-                            ? 'var(--pastel-mint)' 
+                          background: analysisResult.episodeInfo.isNewEpisode
+                            ? 'var(--pastel-mint)'
                             : 'var(--pastel-blue)',
-                          border: `2px solid ${analysisResult.episodeInfo.isNewEpisode 
-                            ? 'var(--pastel-mint-dark)' 
+                          border: `2px solid ${analysisResult.episodeInfo.isNewEpisode
+                            ? 'var(--pastel-mint-dark)'
                             : 'var(--pastel-blue-dark)'}`,
                           borderRadius: '16px',
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
-                            color: analysisResult.episodeInfo.isNewEpisode 
-                              ? 'var(--accent-mint)' 
+                            color: analysisResult.episodeInfo.isNewEpisode
+                              ? 'var(--accent-mint)'
                               : 'var(--accent-blue)',
                             marginBottom: '0.75rem'
                           }}>
@@ -815,9 +823,9 @@ export default function SymptomTracker() {
                         padding: '1.25rem',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                       }}>
-                        <h3 style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <h3 style={{
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: '0.5rem',
                           fontSize: '1.125rem',
                           fontWeight: '700',
@@ -844,9 +852,9 @@ export default function SymptomTracker() {
                         padding: '1.25rem',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                       }}>
-                        <h3 style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <h3 style={{
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: '0.5rem',
                           fontSize: '1.125rem',
                           fontWeight: '700',
@@ -873,9 +881,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
@@ -924,9 +932,9 @@ export default function SymptomTracker() {
                         padding: '1.25rem',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                       }}>
-                        <h3 style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <h3 style={{
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: '0.5rem',
                           fontSize: '1.125rem',
                           fontWeight: '700',
@@ -951,6 +959,29 @@ export default function SymptomTracker() {
                         }}>
                           *This analysis is generated by AI and is for educational purposes only. Not medical advice.
                         </p>
+
+                        {/* Analysis Citations */}
+                        {analysisResult.analysisCitations && analysisResult.analysisCitations.length > 0 && (
+                          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--pastel-blue-dark)' }}>
+                            <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--accent-blue)', marginBottom: '0.5rem' }}>
+                              Sources:
+                            </h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.75rem', lineHeight: '1.5' }}>
+                              {analysisResult.analysisCitations.map((citation, index) => (
+                                <li key={index} style={{ marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                                  <a
+                                    href={citation.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}
+                                  >
+                                    {citation.source} - {citation.title} ({citation.year})
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
 
                       {/* Medical Consultation */}
@@ -962,9 +993,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
@@ -992,9 +1023,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
@@ -1011,6 +1042,25 @@ export default function SymptomTracker() {
                                   text={tip}
                                   medicalTerms={analysisResult.medicalTerms}
                                 />
+                                {/* Self-care Citations for this tip */}
+                                {analysisResult.selfCareCitations &&
+                                 analysisResult.selfCareCitations[index] &&
+                                 analysisResult.selfCareCitations[index].length > 0 && (
+                                  <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                    {analysisResult.selfCareCitations[index].map((citation, citIndex) => (
+                                      <div key={citIndex}>
+                                        <a
+                                          href={citation.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{ color: 'var(--accent-mint)', textDecoration: 'none' }}
+                                        >
+                                          [{citation.source}]
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -1038,9 +1088,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
@@ -1057,6 +1107,25 @@ export default function SymptomTracker() {
                                   text={note}
                                   medicalTerms={analysisResult.medicalTerms}
                                 />
+                                {/* Educational Citations for this note */}
+                                {analysisResult.educationalCitations &&
+                                 analysisResult.educationalCitations[index] &&
+                                 analysisResult.educationalCitations[index].length > 0 && (
+                                  <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                    {analysisResult.educationalCitations[index].map((citation, citIndex) => (
+                                      <div key={citIndex}>
+                                        <a
+                                          href={citation.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{ color: 'var(--accent-coral)', textDecoration: 'none' }}
+                                        >
+                                          [{citation.source}]
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -1081,9 +1150,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',
@@ -1108,9 +1177,9 @@ export default function SymptomTracker() {
                           padding: '1.25rem',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}>
-                          <h3 style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <h3 style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '0.5rem',
                             fontSize: '1.125rem',
                             fontWeight: '700',

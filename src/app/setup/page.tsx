@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { checkChromeAIAvailability } from '@/lib/chrome-ai';
+import { aiService } from '@/lib/ai-service';
 import { aiSetupService } from '@/services/aiSetupService';
 import { DemoSimulation, MOCK_EPISODES, formatDisplayDate } from '@/components/demo';
 import {
@@ -31,12 +31,14 @@ export default function SetupPage() {
 
       // Show setup content only if AI is not set up
       setIsCheckingSetup(false);
-      const status = await checkChromeAIAvailability();
+      const status = await aiService.initialize();
       setAiAvailable(status.available);
-      
+
       // If AI is available, mark it as set up and redirect to home immediately
       if (status.available) {
-        aiSetupService.markAISetup();
+        const provider = status.provider || 'chrome';
+        aiSetupService.markAISetup(provider);
+        console.log(`✅ AI setup complete with ${provider === 'gemini' ? 'Gemini API' : 'Chrome AI'}`);
         // Redirect immediately, no delay
         router.replace('/');
       }
@@ -61,8 +63,8 @@ export default function SetupPage() {
   // Show loading state while checking if AI is already set up
   if (isCheckingSetup) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
+      <div style={{
+        minHeight: '100vh',
         backgroundColor: '#ffffff',
         display: 'flex',
         justifyContent: 'center',
@@ -79,8 +81,8 @@ export default function SetupPage() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
+    <div style={{
+      minHeight: '100vh',
       backgroundColor: '#ffffff',
       display: 'flex',
       flexDirection: 'column'
@@ -95,7 +97,7 @@ export default function SetupPage() {
       }}>
         {/* Timeline Drawer - Sibling to both columns, slides from split */}
         {showDemoEpisodeView && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               top: 0,
@@ -159,7 +161,7 @@ export default function SetupPage() {
                   const startDay = startDate.getDate();
                   const year = startDate.getFullYear();
                   const isSelected = selectedEpisode === episode.id;
-                  
+
                   // Calculate end date
                   const lastEntry = episode.entries[episode.entries.length - 1];
                   const endDate = new Date(lastEntry.date);
@@ -167,7 +169,7 @@ export default function SetupPage() {
                   const endMonth = endDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
                   const endYear = endDate.getFullYear();
                   const showEndDate = endDate.toDateString() !== startDate.toDateString();
-                  
+
                   const cardColors = [
                     { bg: '#FFE5EC', border: '#FF6B9D', line: '#FF6B9D' },
                     { bg: '#E8F4FA', border: '#4A90E2', line: '#4A90E2' },
@@ -326,7 +328,7 @@ export default function SetupPage() {
                             }}>
                               {episode.title}
                             </h3>
-                            
+
                             <div className="episode-subtitle-row" style={{
                               marginBottom: '1rem'
                             }}>
@@ -433,7 +435,7 @@ export default function SetupPage() {
             </div>
           </div>
         )}
-        
+
         {/* Left: Setup Instructions */}
         <div style={{
           background: 'linear-gradient(135deg, var(--pastel-peach) 0%, var(--pastel-coral) 100%)',
@@ -544,7 +546,85 @@ export default function SetupPage() {
 
             {!aiAvailable && (
               <>
-                {/* Enable Chrome AI Section */}
+                {/* Option 1: Use Gemini API via Supabase */}
+                <div style={{
+                  background: 'white',
+                  border: '2px solid #10b981',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '400',
+                    color: '#10b981',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <MdCheckCircle size={20} />
+                    Option 1: Use Gemini API (Recommended)
+                  </h3>
+                  <p style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.9375rem',
+                    lineHeight: '1.6',
+                    marginBottom: '1.5rem'
+                  }}>
+                    Works on any browser! Uses Gemini API for AI-powered symptom analysis with medical citations.
+                  </p>
+
+                  <button
+                    onClick={async () => {
+                      // Mark as setup with Gemini provider
+                      aiSetupService.markAISetup('gemini');
+                      console.log('✅ User selected Gemini API');
+                      // Redirect to home
+                      router.replace('/');
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '1rem'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = '#059669';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = '#10b981';
+                    }}
+                  >
+                    Use Gemini API
+                  </button>
+
+                  <div style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #86efac',
+                    borderRadius: '8px',
+                    padding: '1rem'
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      color: '#065f46',
+                      fontSize: '0.875rem',
+                      lineHeight: '1.6'
+                    }}>
+                      ✅ <strong>Benefits:</strong> Works on Safari, Chrome, Firefox, and all browsers. Better analysis quality with medical citations.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Option 2: Enable Chrome AI Section */}
                 <div style={{
                   background: 'white',
                   border: '2px solid var(--pastel-coral-dark)',
@@ -563,7 +643,7 @@ export default function SetupPage() {
                     gap: '0.5rem'
                   }}>
                     <MdSettings size={20} />
-                    Enable Chrome AI
+                    Option 2: Enable Chrome AI (Chrome Only)
                   </h3>
                   <p style={{
                     color: 'var(--text-secondary)',
@@ -741,7 +821,7 @@ export default function SetupPage() {
         </div>
 
         {/* Right: Demo Simulation */}
-        <DemoSimulation 
+        <DemoSimulation
           onShowEpisodeView={setShowDemoEpisodeView}
           selectedEpisode={selectedEpisode}
           selectedEntry={selectedEntry}

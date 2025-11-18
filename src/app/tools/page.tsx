@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { checkChromeAIAvailability, symptomAnalyzer } from '@/lib/chrome-ai';
+import { aiService } from '@/lib/ai-service';
 import { getDeviceId } from '@/lib/utils';
 import { storageService } from '@/services/storageService';
 import { aiSetupService } from '@/services/aiSetupService';
@@ -868,10 +868,15 @@ export default function ToolsPage() {
   useEffect(() => {
     setDeviceId(getDeviceId());
 
-    // Check Chrome AI availability
+    // Check AI availability (Gemini or Chrome AI)
     async function checkAI() {
-      const status = await checkChromeAIAvailability();
-      setAiStatus(status);
+      const status = await aiService.getStatus();
+      setAiStatus({
+        available: status.available,
+        status: status.status,
+        instructions: status.instructions,
+        languageModelAvailable: status.available
+      });
     }
     checkAI();
   }, []);
@@ -1009,10 +1014,10 @@ export default function ToolsPage() {
         `📅 Generated date range: ${dates[0]} to ${dates[dates.length - 1]}`
       );
 
-      // Initialize Chrome AI for symptom analysis
-      console.log('🤖 Initializing Chrome built-in AI...');
-      await symptomAnalyzer.initialize();
-      console.log('✅ Chrome AI initialized successfully');
+      // Initialize AI service (Gemini or Chrome AI) for symptom analysis
+      console.log('🤖 Initializing AI service...');
+      await aiService.initialize();
+      console.log('✅ AI service initialized successfully');
 
       // Generate entries with some days having multiple entries
       const allEntries = [];
@@ -1321,8 +1326,8 @@ export default function ToolsPage() {
           };
         }
 
-        // Use Chrome's built-in AI to analyze symptoms
-        const aiResult = await symptomAnalyzer.analyzeSymptoms(
+        // Use unified AI service (Gemini or Chrome AI) to analyze symptoms
+        const aiResult = await aiService.analyzeSymptoms(
           symptomNames,
           dayNotes,
           episodeContext
@@ -2729,9 +2734,9 @@ export default function ToolsPage() {
   ];
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
       background: 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)',
       height: '100%',
       minHeight: '100vh',

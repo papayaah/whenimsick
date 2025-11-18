@@ -18,6 +18,13 @@ export interface MedicalTerm {
   definition: string;
 }
 
+export interface Citation {
+  source: string;
+  title: string;
+  url: string;
+  year: string;
+}
+
 export interface SymptomAnalysisResult {
   dailySummary: string;
   analysis: string;
@@ -30,6 +37,10 @@ export interface SymptomAnalysisResult {
   followUpQuestion: string;
   // Medical terms that need tooltips
   medicalTerms?: MedicalTerm[];
+  // Citations for analysis, educational information, and self-care tips
+  analysisCitations?: Citation[];
+  educationalCitations?: Citation[][];
+  selfCareCitations?: Citation[][];
   // Episode-specific fields
   trend?: 'improving' | 'stable' | 'worsening';
   dayNumber?: number;
