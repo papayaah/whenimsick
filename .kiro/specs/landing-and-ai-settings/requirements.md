@@ -26,8 +26,11 @@ This feature adds a landing page to introduce new users to When I'm Sick and pro
 1. WHEN a user visits the root URL for the first time, THE system SHALL display a landing page with product overview
 2. WHEN the landing page is displayed, THE system SHALL show key features including symptom tracking, AI analysis, episode tracking, and privacy-first design
 3. WHEN the landing page is displayed, THE system SHALL provide a prominent call-to-action button to begin using the app
-4. WHEN a user clicks the call-to-action button, THE system SHALL navigate to the AI setup page
-5. WHEN a returning user visits the root URL, THE system SHALL redirect directly to the symptom tracker if AI is already configured
+4. WHEN a user clicks the call-to-action button, THE system SHALL navigate directly to the symptom tracker with default AI provider
+5. WHEN a returning user visits the root URL, THE system SHALL redirect directly to the symptom tracker
+6. WHEN the landing page loads, THE system SHALL achieve a Cumulative Layout Shift (CLS) score of 0 by reserving space for all content
+7. WHEN the landing page loads, THE system SHALL achieve Largest Contentful Paint (LCP) under 2.5 seconds
+8. WHEN images are loaded, THE system SHALL use Next.js Image component with explicit width and height to prevent layout shifts
 
 ### Requirement 2
 
@@ -35,14 +38,17 @@ This feature adds a landing page to introduce new users to When I'm Sick and pro
 
 #### Acceptance Criteria
 
-1. WHEN a user accesses the AI setup page, THE system SHALL display three AI provider options: Chrome AI, Shared Gemini API, and Custom Gemini API Key
-2. WHEN Chrome AI is available in the browser, THE system SHALL mark it as the recommended option
-3. WHEN a user selects Chrome AI, THE system SHALL verify browser compatibility and enable flags if needed
-4. WHEN a user selects Shared Gemini API, THE system SHALL inform them about limited free usage
-5. WHEN a user selects Custom Gemini API Key, THE system SHALL provide an input field for the API key
-6. WHEN a user enters a custom API key, THE system SHALL validate the key format before saving
-7. WHEN a user saves their AI provider selection, THE system SHALL persist the choice to LocalStorage
-8. WHEN AI provider configuration is complete, THE system SHALL redirect to the symptom tracker
+1. WHEN the system initializes without a saved provider preference, THE system SHALL default to the Shared Gemini API
+2. WHEN a user accesses the settings page, THE system SHALL display three AI provider options: Chrome AI, Shared Gemini API, and Custom Gemini API Key
+3. WHEN Chrome AI is available in the browser, THE system SHALL mark it as the recommended option for privacy
+4. WHEN a user selects Chrome AI, THE system SHALL verify browser compatibility and show setup instructions if needed
+5. WHEN a user selects Shared Gemini API, THE system SHALL inform them about limited free usage (10 requests per day)
+6. WHEN a user selects Custom Gemini API Key, THE system SHALL provide an input field for the API key
+7. WHEN a user enters a custom API key, THE system SHALL validate the key format before saving
+8. WHEN a user saves their AI provider selection, THE system SHALL persist the choice to LocalStorage and reinitialize the AI service
+9. WHEN using Shared Gemini API, THE system SHALL enforce a rate limit of 10 requests per 24-hour period per device
+10. WHEN a user reaches the rate limit, THE system SHALL display a clear message suggesting Chrome AI or custom API key options
+11. WHEN the rate limit resets, THE system SHALL allow the user to make requests again
 
 ### Requirement 3
 

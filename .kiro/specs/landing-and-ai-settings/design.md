@@ -15,23 +15,25 @@ This feature introduces a landing page for new users and a comprehensive AI prov
 └────────┬────────┘
          │
          ▼
-┌─────────────────┐
-│   Setup Page    │
-│ (AI Selection)  │
-└────────┬────────┘
+┌─────────────────────────────────────────┐
+│         Symptom Tracker                 │
+│    (Default: Shared Gemini API)         │
+│    No setup required - works instantly! │
+└────────┬────────────────────────────────┘
          │
          ▼
-┌─────────────────┐     ┌──────────────────┐
-│ Symptom Tracker │────▶│  Settings Page   │
-│  (Main App)     │     │ (AI Management)  │
-└────────┬────────┘     └──────────────────┘
+┌──────────────────────────────────────────┐
+│         Settings Page (Optional)         │
+│  Switch to Chrome AI or Custom API Key   │
+└──────────────────────────────────────────┘
          │
          ▼
 ┌─────────────────────────────────────────┐
 │          AI Service Layer               │
 │  ┌─────────────────────────────────┐   │
-│  │  Chrome AI  │  Gemini (Shared)  │   │
-│  │             │  Gemini (Custom)  │   │
+│  │  Gemini (Shared) ← DEFAULT      │   │
+│  │  Chrome AI       ← Optional     │   │
+│  │  Gemini (Custom) ← Optional     │   │
 │  └─────────────────────────────────┘   │
 └─────────────────────────────────────────┘
          │
@@ -39,11 +41,19 @@ This feature introduces a landing page for new users and a comprehensive AI prov
 ┌─────────────────────────────────────────┐
 │         Storage Service Layer           │
 │  ┌─────────────────────────────────┐   │
-│  │  API Keys  │  Usage Stats       │   │
-│  │  Provider  │  Cost Tracking     │   │
+│  │  Provider Pref │  Usage Stats   │   │
+│  │  API Keys      │  Cost Tracking │   │
 │  └─────────────────────────────────┘   │
 └─────────────────────────────────────────┘
 ```
+
+**Key UX Improvement**: 
+- **Zero friction onboarding**: Users can start tracking symptoms immediately with Shared Gemini API (via Supabase Edge Function at `/functions/v1/symptoms`)
+- **No setup required**: The app works out of the box - `gemini-ai.ts` already implements this
+- **Supabase Edge Function handles**:
+  - Initial symptom analysis (first entry)
+  - Episode progression analysis (subsequent entries with illness history)
+- **Optional optimization**: Advanced users can switch to Chrome AI (offline, private) or Custom API Key (unlimited) via Settings
 
 ### Component Structure
 
@@ -66,11 +76,14 @@ This feature introduces a landing page for new users and a comprehensive AI prov
 **Routing Logic**:
 ```typescript
 // On page load:
-if (aiSetupService.isAISetup()) {
-  // Returning user - show symptom tracker (existing behavior)
+const hasVisitedBefore = localStorage.getItem('has_visited');
+
+if (hasVisitedBefore) {
+  // Returning user - go straight to symptom tracker
   return <SymptomTrackerPage />;
 } else {
   // New user - show landing page
+  localStorage.setItem('has_visited', 'true');
   return <LandingPage />;
 }
 ```
@@ -93,8 +106,9 @@ if (aiSetupService.isAISetup()) {
   - Pastel color scheme matching app aesthetic
   
 - **Call-to-Action**:
-  - Primary: "Get Started" → navigates to `/setup`
+  - Primary: "Start Tracking Symptoms" → navigates to `/episodes` (symptom tracker)
   - Secondary: "Learn More" → scrolls to features section
+  - Note: No setup required! App defaults to Shared Gemini API
 
 **State Management**:
 - Check AI setup status on mount
@@ -107,6 +121,55 @@ if (aiSetupService.isAISetup()) {
   - Direct app access for returning users
 - No separate `/landing` route needed
 - Maintains existing URL structure
+
+**Performance Optimization (Lighthouse 100)**:
+
+1. **Zero Layout Shift (CLS = 0)**:
+   - Use Next.js `<Image>` component with explicit `width` and `height`
+   - Reserve space for all content with CSS `aspect-ratio` or fixed heights
+   - No dynamic content that causes reflow
+   - Load fonts with `font-display: swap` and preload critical fonts
+
+2. **Fast LCP (< 2.5s)**:
+   - Hero image optimized and served as WebP/AVIF
+   - Critical CSS inlined
+   - Defer non-critical JavaScript
+   - Use Next.js automatic image optimization
+
+3. **Instant FID/INP**:
+   - Minimal JavaScript on landing page
+   - No blocking scripts
+   - Lazy load below-the-fold content
+
+4. **Implementation Checklist**:
+   ```typescript
+   // ✅ Use Next.js Image with dimensions
+   <Image 
+     src="/hero.jpg" 
+     width={1200} 
+     height={800} 
+     alt="When I'm Sick"
+     priority // LCP image
+   />
+   
+   // ✅ Reserve space for feature cards
+   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+     {features.map(f => (
+       <div className="aspect-[4/3]"> {/* Fixed aspect ratio */}
+         {/* Content */}
+       </div>
+     ))}
+   </div>
+   
+   // ✅ Preload critical fonts
+   <link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+   ```
+
+5. **Metadata Optimization**:
+   - Proper Open Graph tags
+   - Twitter Card metadata
+   - Structured data (JSON-LD)
+   - Canonical URLs
 
 ### 2. Enhanced Setup Page
 
@@ -163,11 +226,12 @@ interface SetupState {
    - Option to change provider
    - API key management (for custom keys)
 
-2. **Usage Statistics** (for custom API keys only)
+2. **Usage Statistics** (ONLY shown for custom API keys)
    - Total API calls
    - Total tokens used (input + output)
-   - Estimated cost
+   - Estimated cost in USD
    - Reset statistics button
+   - **Note**: Not shown for Chrome AI (free) or Shared Gemini (free tier)
 
 3. **API Key Management** (for custom keys)
    - Masked API key display
@@ -226,25 +290,34 @@ class AISettingsService {
 
 **Location**: `src/services/costTrackingService.ts` (new)
 
-**Purpose**: Track API usage and calculate costs for custom API keys
+**Purpose**: Track API usage and calculate costs **ONLY for custom API keys**
+
+**Important**: 
+- Chrome AI (built-in): **No tracking needed** - completely free and offline
+- Shared Gemini API: **No tracking needed** - free tier managed by Supabase
+- Custom API Key: **Track usage and costs** - user pays per token
 
 **Methods**:
 ```typescript
 class CostTrackingService {
-  // Usage tracking
+  // Usage tracking (only for custom API keys)
   recordApiCall(inputTokens: number, outputTokens: number): void;
-  getUsageStats(): UsageStats;
+  getUsageStats(): UsageStats | null;
   resetUsageStats(): void;
   
   // Cost calculation
   calculateCost(inputTokens: number, outputTokens: number): number;
   getTotalCost(): number;
+  
+  // Check if tracking is active
+  isTrackingEnabled(): boolean; // Returns true only for custom API key
 }
 ```
 
 **Pricing** (Gemini 1.5 Flash as of 2024):
 - Input: $0.075 per 1M tokens
 - Output: $0.30 per 1M tokens
+- **Note**: Only applies to custom API keys
 
 **Storage Structure**:
 ```typescript
@@ -262,7 +335,7 @@ interface StoredUsageData {
 }
 ```
 
-**Storage Key**: `api_usage_stats`
+**Storage Key**: `api_usage_stats` (only exists when using custom API key)
 
 ### 6. Enhanced Gemini AI Service
 
@@ -271,8 +344,9 @@ interface StoredUsageData {
 **Changes**:
 - Check for custom API key before using Supabase
 - Support direct Gemini API calls with custom key
-- Parse token usage from responses
-- Report usage to cost tracking service
+- Parse token usage from responses **ONLY for custom API keys**
+- Report usage to cost tracking service **ONLY when using custom API key**
+- Skip tracking for Shared Gemini API (Supabase) - it's free tier
 
 **New Interface**:
 ```typescript
@@ -306,6 +380,63 @@ interface GeminiResponse {
 - Initialize appropriate provider based on settings
 - Support switching between providers
 - Handle custom API key configuration
+
+## Rate Limiting and Cost Protection
+
+**Shared Gemini API Rate Limiting**:
+
+To protect the free tier, implement client-side rate limiting:
+
+| Provider | Rate Limit | Tracking | Reason |
+|----------|------------|----------|--------|
+| **Chrome AI** | ❌ None | ❌ No | Completely free, runs locally offline |
+| **Shared Gemini API** | ✅ 10/day | ✅ Yes | Protect free tier from abuse |
+| **Custom API Key** | ❌ None | ✅ Yes (cost) | User pays, user decides |
+
+**Rate Limit Implementation**:
+```typescript
+interface RateLimitData {
+  count: number;
+  resetTime: string; // ISO timestamp
+  deviceId: string;
+}
+
+// Check rate limit before API call
+if (currentProvider === 'gemini-shared') {
+  const rateLimitData = getRateLimitData();
+  
+  if (rateLimitData.count >= 10 && !isResetTimeExpired(rateLimitData.resetTime)) {
+    throw new RateLimitError(
+      'Daily limit reached (10 requests). Try Chrome AI (free, offline) or add your own API key for unlimited usage.',
+      rateLimitData.resetTime
+    );
+  }
+  
+  // Increment counter after successful call
+  incrementRateLimitCounter();
+}
+
+// Only track cost when using custom API key
+if (currentProvider === 'gemini-custom' && customApiKey) {
+  costTrackingService.recordApiCall(inputTokens, outputTokens);
+}
+```
+
+**Storage**:
+```typescript
+// LocalStorage key: whenimsick_rate_limit
+{
+  "count": 7,
+  "resetTime": "2024-12-03T00:00:00Z",
+  "deviceId": "device-abc"
+}
+```
+
+**User Experience**:
+- Show remaining requests in Settings page
+- Clear error message when limit reached
+- Suggest alternatives (Chrome AI or custom key)
+- Auto-reset at midnight UTC
 
 ## Data Models
 
