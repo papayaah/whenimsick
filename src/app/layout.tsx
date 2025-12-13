@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Barrio } from 'next/font/google';
 import './globals.css';
-import FloatingNavigation from '@/components/FloatingNavigation';
-import LegalGate from '@/components/LegalGate';
-import FamilyPolaroid from '@/components/FamilyPolaroid';
+import RootLayoutClient from '@/components/RootLayoutClient';
 import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
@@ -166,43 +164,7 @@ export default function RootLayout({
             /* Let content reach the very bottom; floating nav floats over */
           }}
         >
-          {/* Alpha Version Ribbon Badge */}
-          <div
-            style={{
-              position: 'fixed',
-              top: '20px',
-              right: '-60px',
-              background: 'linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffa8c5 100%)',
-              color: 'white',
-              padding: '8px 80px',
-              fontSize: '12px',
-              fontWeight: '600',
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              transform: 'rotate(45deg)',
-              boxShadow: '0 4px 12px rgba(255, 107, 157, 0.3)',
-              zIndex: 1000,
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              textAlign: 'center',
-              lineHeight: '1.4',
-              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-            }}
-          >
-            <div>
-              Alpha <span style={{ fontSize: '9px', fontWeight: '400' }}>v0.1</span>
-            </div>
-            <div style={{ fontSize: '9px', fontWeight: '400', textTransform: 'none', letterSpacing: '0.3px' }}>
-              Still Making It Better
-            </div>
-          </div>
-          
-          <LegalGate>
-            {children}
-            {/* Persistent Floating Navigation and Capy across routes */}
-            <FloatingNavigation />
-            {/* Family Polaroid - appears on all screens */}
-            <FamilyPolaroid />
-          </LegalGate>
+          <RootLayoutClient>{children}</RootLayoutClient>
         </div>
         {/* Remove analytics during local dev to silence console logs */}
         {process.env.NODE_ENV === 'production' ? <Analytics /> : null}

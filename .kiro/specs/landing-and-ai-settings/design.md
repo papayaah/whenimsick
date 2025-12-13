@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature introduces a landing page for new users and a comprehensive AI provider settings system that allows users to choose between three AI options: Chrome's built-in AI (free, offline), a shared Gemini API (limited free usage via Supabase), or their own Gemini API key (unlimited usage with cost tracking). The design maintains the existing pastel aesthetic and integrates seamlessly with the current application architecture.
+This feature introduces a landing page for new users and a comprehensive AI provider settings system that allows users to choose between three AI options: Chrome's built-in AI (offline), a shared Gemini API (via Supabase), or their own Gemini API key (with cost tracking). The design maintains the existing pastel aesthetic and integrates seamlessly with the current application architecture.
 
 ## Architecture
 
@@ -57,9 +57,10 @@ This feature introduces a landing page for new users and a comprehensive AI prov
 
 ### Component Structure
 
-- **Landing Page** (`src/app/landing/page.tsx`): Marketing page for new visitors
-- **Enhanced Setup Page** (`src/app/setup/page.tsx`): AI provider selection with three options
-- **Settings Page** (`src/app/settings/page.tsx`): AI configuration and usage statistics
+- **Landing Page** (`src/app/page.tsx`): Marketing page at root URL `/`
+- **Symptom Tracker** (`src/app/app/page.tsx`): Main application at `/app`
+- **Enhanced Setup Page** (`src/app/setup/page.tsx`): AI provider selection with three options at `/setup`
+- **Settings Page** (`src/app/settings/page.tsx`): AI configuration and usage statistics at `/settings`
 - **AI Settings Service** (`src/services/aiSettingsService.ts`): Manages API keys and provider preferences
 - **Cost Tracking Service** (`src/services/costTrackingService.ts`): Tracks API usage and calculates costs
 - **Enhanced Gemini AI Service** (`src/lib/gemini-ai.ts`): Supports both shared and custom API keys
@@ -69,30 +70,49 @@ This feature introduces a landing page for new users and a comprehensive AI prov
 
 ### 1. Landing Page Component
 
-**Location**: `src/app/page.tsx` (modified to show landing for new users)
+**Location**: `src/app/page.tsx` (landing page only)
 
-**Purpose**: Serve as both marketing landing page for new users AND redirect returning users to the app
+**Purpose**: Marketing landing page that's always accessible at the root URL
 
 **Routing Logic**:
 ```typescript
-// On page load:
-const hasVisitedBefore = localStorage.getItem('has_visited');
-
-if (hasVisitedBefore) {
-  // Returning user - go straight to symptom tracker
-  return <SymptomTrackerPage />;
-} else {
-  // New user - show landing page
-  localStorage.setItem('has_visited', 'true');
-  return <LandingPage />;
+// Root (/) always shows the landing page
+// No conditional logic needed - just render the landing page
+export default function LandingPage() {
+  return <LandingPageComponent />;
 }
 ```
+
+**Complete User Flow**:
+1. User visits `/` → Landing page shows immediately (no legal gate)
+2. User clicks "Get Started" → Navigate to `/setup`
+3. When accessing `/setup` or `/app` → Legal gate overlay appears if terms not accepted
+4. Legal gate shows as modal overlay with dimmed background
+5. After accepting terms → Overlay dismisses, user continues to requested page
+6. User can always return to `/` to see the landing page (no legal gate)
+
+**Legal Gate Behavior**:
+- **Landing page (`/`)**: No legal gate, fully accessible
+- **App routes (`/app`, `/setup`, `/settings`, `/episodes`, `/glossary`)**: Legal gate overlay if not accepted
+- **Legal pages (`/legal-acceptance`, `/terms`, `/privacy`)**: Always accessible
+- Legal gate appears as a modal overlay with dimmed background, not a redirect
 
 **Landing Page Features**:
 - **Hero Section**: 
   - Product name and tagline
   - Brief description of what When I'm Sick does
   - Prominent "Get Started" button
+  
+- **Interactive Demo Section**:
+  - Embedded DemoSimulation component (currently on /setup page)
+  - Extended demo flow with episode view:
+    1. Select symptoms
+    2. Analyze symptoms
+    3. View results
+    4. **NEW**: Click "View Episode" to see episode tracking mockup
+  - Users can experience full app flow without leaving landing page
+  - Shows real example of how the app works including episode tracking
+  - Includes "Get Started" CTA after demo
   
 - **Feature Highlights**:
   - Symptom tracking with AI analysis
@@ -101,14 +121,29 @@ if (hasVisitedBefore) {
   - Privacy-first (data stays local)
   
 - **Visual Elements**:
-  - Screenshots or demo video
-  - Capybara mascot integration
   - Pastel color scheme matching app aesthetic
+  - No Capybara mascot (only appears in terms page and inside the app)
+  - No separate screenshots needed (demo is interactive)
   
 - **Call-to-Action**:
-  - Primary: "Start Tracking Symptoms" → navigates to `/episodes` (symptom tracker)
+  - Primary: "Get Started" → navigates to `/setup`
   - Secondary: "Learn More" → scrolls to features section
-  - Note: No setup required! App defaults to Shared Gemini API
+
+**Design Constraints**:
+- No navigation bar on landing page (clean, focused experience)
+- No alpha banner on landing page (only shows inside the app)
+- No Capybara mascot on landing page (only in app and terms page)
+- No legal gate on landing page (only appears as overlay when accessing app routes)
+- No FloatingNavigation on landing page
+- No mention of "free" or "limited" usage (entire app is free to use)
+- Focus on features and privacy, not pricing or costs
+- Landing page is completely open and accessible without any gates or overlays
+
+**Layout Isolation**:
+- Landing page uses its own isolated layout (no shared root layout components)
+- Prevents flickering or state leakage between landing and app
+- Landing page loads independently without app dependencies
+- Clean separation ensures instant load without waiting for app initialization
 
 **State Management**:
 - Check AI setup status on mount
@@ -178,17 +213,17 @@ if (hasVisitedBefore) {
 **New Features**:
 - Three AI provider options displayed as cards:
   1. **Chrome AI** (Recommended if available)
-     - Badge: "Free & Offline"
+     - Badge: "Offline & Private"
      - Shows availability status
      - Setup instructions if not available
   
   2. **Shared Gemini API** (Recommended if Chrome AI unavailable)
-     - Badge: "Limited Free Usage"
+     - Badge: "Works Everywhere"
      - No configuration needed
-     - Usage limits displayed
+     - Daily usage limit displayed (10 requests/day)
   
   3. **Custom Gemini API Key**
-     - Badge: "Unlimited Usage"
+     - Badge: "Bring Your Own Key"
      - API key input field
      - Validation feedback
      - Cost tracking notice
@@ -231,7 +266,7 @@ interface SetupState {
    - Total tokens used (input + output)
    - Estimated cost in USD
    - Reset statistics button
-   - **Note**: Not shown for Chrome AI (free) or Shared Gemini (free tier)
+   - **Note**: Only shown for Custom API Key users
 
 3. **API Key Management** (for custom keys)
    - Masked API key display
@@ -293,8 +328,8 @@ class AISettingsService {
 **Purpose**: Track API usage and calculate costs **ONLY for custom API keys**
 
 **Important**: 
-- Chrome AI (built-in): **No tracking needed** - completely free and offline
-- Shared Gemini API: **No tracking needed** - free tier managed by Supabase
+- Chrome AI (built-in): **No tracking needed** - runs offline locally
+- Shared Gemini API: **Track daily usage only** - rate limited to 10 requests/day
 - Custom API Key: **Track usage and costs** - user pays per token
 
 **Methods**:
@@ -346,7 +381,7 @@ interface StoredUsageData {
 - Support direct Gemini API calls with custom key
 - Parse token usage from responses **ONLY for custom API keys**
 - Report usage to cost tracking service **ONLY when using custom API key**
-- Skip tracking for Shared Gemini API (Supabase) - it's free tier
+- For Shared Gemini API, only track daily request count (not tokens/cost)
 
 **New Interface**:
 ```typescript
@@ -385,13 +420,13 @@ interface GeminiResponse {
 
 **Shared Gemini API Rate Limiting**:
 
-To protect the free tier, implement client-side rate limiting:
+Implement client-side rate limiting for shared API:
 
 | Provider | Rate Limit | Tracking | Reason |
 |----------|------------|----------|--------|
-| **Chrome AI** | ❌ None | ❌ No | Completely free, runs locally offline |
-| **Shared Gemini API** | ✅ 10/day | ✅ Yes | Protect free tier from abuse |
-| **Custom API Key** | ❌ None | ✅ Yes (cost) | User pays, user decides |
+| **Chrome AI** | ❌ None | ❌ No | Runs locally offline |
+| **Shared Gemini API** | ✅ 10/day | ✅ Yes | Prevent abuse of shared resource |
+| **Custom API Key** | ❌ None | ✅ Yes (cost) | User manages their own usage |
 
 **Rate Limit Implementation**:
 ```typescript
@@ -407,7 +442,7 @@ if (currentProvider === 'gemini-shared') {
   
   if (rateLimitData.count >= 10 && !isResetTimeExpired(rateLimitData.resetTime)) {
     throw new RateLimitError(
-      'Daily limit reached (10 requests). Try Chrome AI (free, offline) or add your own API key for unlimited usage.',
+      'Daily limit reached (10 requests). Try Chrome AI (offline) or add your own API key for more usage.',
       rateLimitData.resetTime
     );
   }
@@ -563,92 +598,30 @@ interface ApiKeyValidation {
 - **Initialization Failed**: "Failed to initialize [provider name]. Please try again or select a different provider."
 - **Provider Unavailable**: "[Provider name] is not available on this device."
 
-## Testing Strategy
+## Manual Testing
 
-### Unit Testing
+**Test Scenarios**:
+1. **First-time user flow**: Legal acceptance → Landing → Setup → Symptom Tracker
+2. **Returning user flow**: Direct access → Symptom Tracker (bypasses landing)
+3. **Provider switching**: Chrome AI → Custom Key → Shared Gemini
+4. **Cost tracking**: Make multiple API calls with custom key → View statistics → Reset
+5. **API key management**: Add key → Use key → Update key → Remove key
+6. **Rate limiting**: Make 10+ requests with shared API → Verify limit enforcement
 
-**Framework**: Jest with React Testing Library
-
-**Test Coverage**:
-1. **Landing Page**
-   - Renders all key features
-   - CTA button navigates to setup
-   - Redirects returning users
-
-2. **Setup Page**
-   - Displays three provider options
-   - Validates API key format
-   - Persists provider selection
-   - Handles provider initialization
-
-3. **Settings Page**
-   - Displays current provider
-   - Shows usage statistics for custom keys
-   - Masks API keys correctly
-   - Resets usage statistics
-
-4. **AI Settings Service**
-   - Stores and retrieves provider preferences
-   - Manages API keys securely
-   - Validates API key format
-
-5. **Cost Tracking Service**
-   - Records API calls accurately
-   - Calculates costs correctly
-   - Persists usage data
-   - Resets statistics
-
-6. **Enhanced Gemini AI Service**
-   - Routes to correct API based on configuration
-   - Extracts token usage from responses
-   - Maintains consistent prompt structure
-   - Handles errors appropriately
-
-### Property-Based Testing
-
-**Framework**: fast-check (JavaScript property-based testing library)
-
-**Configuration**: Each property test should run a minimum of 100 iterations
-
-**Test Tagging**: Each property-based test must include a comment with the format:
-`// Feature: landing-and-ai-settings, Property X: [property description]`
-
-**Properties to Test**:
-1. API key validation consistency (Property 1)
-2. Provider persistence round-trip (Property 2)
-3. API call counting (Property 3)
-4. Token extraction (Property 4)
-5. Cost calculation (Property 5)
-6. Usage data persistence (Property 6)
-7. Provider display (Property 7)
-8. Provider change re-initialization (Property 8)
-9. API key storage locality (Property 9)
-10. API key masking (Property 10)
-11. API routing logic (Property 11)
-12. Prompt structure consistency (Property 12)
-13. Response parsing consistency (Property 13)
-14. Error message clarity (Property 14)
-
-### Integration Testing
-
-**Scenarios**:
-1. **First-time user flow**: Landing → Setup → Symptom Tracker
-2. **Provider switching**: Chrome AI → Custom Key → Shared Gemini
-3. **Cost tracking**: Make multiple API calls → View statistics → Reset
-4. **API key management**: Add key → Use key → Update key → Remove key
-
-### Manual Testing Checklist
-
-- [ ] Landing page displays correctly on desktop and mobile
-- [ ] All three AI provider options are clearly explained
+**Manual Testing Checklist**:
+- [ ] Landing page displays correctly on desktop and mobile (no Capybara mascot)
+- [ ] Legal gate shows before landing page for new users
+- [ ] All three AI provider options are clearly explained in setup
 - [ ] API key input accepts valid keys and rejects invalid ones
-- [ ] Usage statistics update in real-time
+- [ ] Usage statistics display correctly for custom API key users
 - [ ] Cost calculations match expected values
-- [ ] API key masking works correctly
+- [ ] API key masking works correctly (shows last 4 characters)
 - [ ] Provider switching works without data loss
 - [ ] Error messages are clear and actionable
 - [ ] Settings persist across browser sessions
 - [ ] Navigation flows work correctly
+- [ ] Alpha banner only shows inside app, not on landing page
+- [ ] Rate limiting enforces 10 requests/day for shared API
 
 ## Security Considerations
 

@@ -6,7 +6,7 @@ import { MdAutoAwesome, MdPrivacyTip, MdTimeline, MdLocalHospital } from 'react-
 import { FiActivity, FiCheckCircle } from 'react-icons/fi';
 import DemoSimulation from '@/components/demo/DemoSimulation';
 
-export default function LandingPage() {
+export default function LandingPageVariantA() {
   const router = useRouter();
 
   const handleGetStarted = () => {
@@ -20,7 +20,7 @@ export default function LandingPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Hero Section */}
+      {/* Hero Section - Clean & Minimal */}
       <div style={{
         padding: '4rem 2rem',
         textAlign: 'center',
@@ -109,7 +109,7 @@ export default function LandingPage() {
         <DemoSimulation />
       </div>
 
-      {/* Feature Highlights */}
+      {/* Feature Highlights - Grid Layout */}
       <div style={{
         padding: '4rem 2rem',
         background: 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)'
@@ -131,173 +131,74 @@ export default function LandingPage() {
           maxWidth: '1200px',
           margin: '0 auto'
         }}>
-          {/* Feature 1 */}
-          <div style={{
-            background: 'var(--pastel-mint)',
-            border: '2px solid var(--pastel-mint-dark)',
-            borderRadius: '16px',
-            padding: '2rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-            aspectRatio: '4/3',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              background: 'white',
+          {/* Feature Cards */}
+          {[
+            {
+              icon: FiActivity,
+              title: 'AI-Powered Analysis',
+              description: 'Get instant insights about your symptoms using advanced AI technology. Understand what your body is telling you with educational analysis.',
+              color: 'mint'
+            },
+            {
+              icon: MdTimeline,
+              title: 'Episode Tracking',
+              description: 'Track your symptoms over multiple days and see how your condition progresses. Identify patterns and trends in your health journey.',
+              color: 'blue'
+            },
+            {
+              icon: MdLocalHospital,
+              title: 'Medical Glossary',
+              description: 'Learn about medical terms and conditions with our built-in glossary. Understand the terminology used in your health analysis.',
+              color: 'lavender'
+            },
+            {
+              icon: MdPrivacyTip,
+              title: 'Privacy First',
+              description: 'Your health data stays on your device. No servers, no cloud storage, no data sharing. Complete privacy and control over your information.',
+              color: 'peach'
+            }
+          ].map((feature, index) => (
+            <div key={index} style={{
+              background: `var(--pastel-${feature.color})`,
+              border: `2px solid var(--pastel-${feature.color}-dark)`,
               borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              aspectRatio: '4/3',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1.5rem'
+              flexDirection: 'column'
             }}>
-              <FiActivity size={32} style={{ color: 'var(--accent-mint)' }} />
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: 'white',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1.5rem'
+              }}>
+                <feature.icon size={32} style={{ color: `var(--accent-${feature.color})` }} />
+              </div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: `var(--accent-${feature.color})`,
+                margin: '0 0 1rem 0'
+              }}>
+                {feature.title}
+              </h3>
+              <p style={{
+                fontSize: '1rem',
+                color: 'var(--text-secondary)',
+                margin: 0,
+                lineHeight: '1.6',
+                flex: 1
+              }}>
+                {feature.description}
+              </p>
             </div>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'var(--accent-mint)',
-              margin: '0 0 1rem 0'
-            }}>
-              AI-Powered Analysis
-            </h3>
-            <p style={{
-              fontSize: '1rem',
-              color: 'var(--text-secondary)',
-              margin: 0,
-              lineHeight: '1.6',
-              flex: 1
-            }}>
-              Get instant insights about your symptoms using advanced AI technology. Understand what your body is telling you with educational analysis.
-            </p>
-          </div>
-
-          {/* Feature 2 */}
-          <div style={{
-            background: 'var(--pastel-blue)',
-            border: '2px solid var(--pastel-blue-dark)',
-            borderRadius: '16px',
-            padding: '2rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-            aspectRatio: '4/3',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              background: 'white',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <MdTimeline size={32} style={{ color: 'var(--accent-blue)' }} />
-            </div>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'var(--accent-blue)',
-              margin: '0 0 1rem 0'
-            }}>
-              Episode Tracking
-            </h3>
-            <p style={{
-              fontSize: '1rem',
-              color: 'var(--text-secondary)',
-              margin: 0,
-              lineHeight: '1.6',
-              flex: 1
-            }}>
-              Track your symptoms over multiple days and see how your condition progresses. Identify patterns and trends in your health journey.
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div style={{
-            background: 'var(--pastel-lavender)',
-            border: '2px solid var(--pastel-lavender-dark)',
-            borderRadius: '16px',
-            padding: '2rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-            aspectRatio: '4/3',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              background: 'white',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <MdLocalHospital size={32} style={{ color: 'var(--accent-lavender)' }} />
-            </div>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'var(--accent-lavender)',
-              margin: '0 0 1rem 0'
-            }}>
-              Medical Glossary
-            </h3>
-            <p style={{
-              fontSize: '1rem',
-              color: 'var(--text-secondary)',
-              margin: 0,
-              lineHeight: '1.6',
-              flex: 1
-            }}>
-              Learn about medical terms and conditions with our built-in glossary. Understand the terminology used in your health analysis.
-            </p>
-          </div>
-
-          {/* Feature 4 */}
-          <div style={{
-            background: 'var(--pastel-peach)',
-            border: '2px solid var(--pastel-peach-dark)',
-            borderRadius: '16px',
-            padding: '2rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-            aspectRatio: '4/3',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              background: 'white',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <MdPrivacyTip size={32} style={{ color: 'var(--accent-peach)' }} />
-            </div>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'var(--accent-peach)',
-              margin: '0 0 1rem 0'
-            }}>
-              Privacy First
-            </h3>
-            <p style={{
-              fontSize: '1rem',
-              color: 'var(--text-secondary)',
-              margin: 0,
-              lineHeight: '1.6',
-              flex: 1
-            }}>
-              Your health data stays on your device. No servers, no cloud storage, no data sharing. Complete privacy and control over your information.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
 

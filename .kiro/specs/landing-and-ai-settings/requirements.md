@@ -23,11 +23,11 @@ This feature adds a landing page to introduce new users to When I'm Sick and pro
 
 #### Acceptance Criteria
 
-1. WHEN a user visits the root URL for the first time, THE system SHALL display a landing page with product overview
+1. WHEN a user visits the root URL, THE system SHALL display a landing page with product overview
 2. WHEN the landing page is displayed, THE system SHALL show key features including symptom tracking, AI analysis, episode tracking, and privacy-first design
 3. WHEN the landing page is displayed, THE system SHALL provide a prominent call-to-action button to begin using the app
-4. WHEN a user clicks the call-to-action button, THE system SHALL navigate directly to the symptom tracker with default AI provider
-5. WHEN a returning user visits the root URL, THE system SHALL redirect directly to the symptom tracker
+4. WHEN a user clicks the call-to-action button, THE system SHALL navigate to the AI setup page
+5. WHEN the symptom tracker is accessed, THE system SHALL serve it at the `/app` route
 6. WHEN the landing page loads, THE system SHALL achieve a Cumulative Layout Shift (CLS) score of 0 by reserving space for all content
 7. WHEN the landing page loads, THE system SHALL achieve Largest Contentful Paint (LCP) under 2.5 seconds
 8. WHEN images are loaded, THE system SHALL use Next.js Image component with explicit width and height to prevent layout shifts

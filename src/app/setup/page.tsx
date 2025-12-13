@@ -25,7 +25,7 @@ export default function SetupPage() {
       // Check if AI is already set up first
       if (aiSetupService.isAISetup()) {
         // If already set up, redirect immediately without showing content
-        router.replace('/');
+        router.replace('/app');
         return;
       }
 
@@ -40,7 +40,7 @@ export default function SetupPage() {
         aiSetupService.markAISetup(provider);
         console.log(`✅ AI setup complete with ${provider === 'gemini' ? 'Gemini API' : 'Chrome AI'}`);
         // Redirect immediately, no delay
-        router.replace('/');
+        router.replace('/app');
       }
     };
     checkAI();
@@ -582,7 +582,7 @@ export default function SetupPage() {
                       aiSetupService.markAISetup('gemini');
                       console.log('✅ User selected Gemini API');
                       // Redirect to home
-                      router.replace('/');
+                      router.replace('/app');
                     }}
                     style={{
                       width: '100%',

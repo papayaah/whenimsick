@@ -87,7 +87,7 @@ const FloatingNavigation: React.FC<FloatingNavigationProps> = ({
 
   // Determine active tab from pathname
   const getActiveTab = () => {
-    if (pathname === '/') return 'tracker';
+    if (pathname === '/app') return 'tracker';
     if (pathname?.startsWith('/episodes')) return 'episodes';
     if (pathname?.startsWith('/glossary')) return 'glossary';
     if (pathname?.startsWith('/tools')) return 'tools';
@@ -100,7 +100,7 @@ const FloatingNavigation: React.FC<FloatingNavigationProps> = ({
   const handleTabChange = (tab: 'tracker' | 'episodes' | 'glossary') => {
     switch (tab) {
       case 'tracker':
-        router.push('/');
+        router.push('/app');
         break;
       case 'episodes':
         router.push('/episodes');

@@ -27,13 +27,13 @@ export default function LegalGate({ children }: LegalGateProps) {
     // Only run on client-side
     if (!isClient) return;
 
-    // Legal pages that should always be accessible
-    const legalPages = ['/legal-acceptance', '/terms', '/privacy'];
+    // Pages that should always be accessible without legal gate
+    const publicPages = ['/legal-acceptance', '/terms', '/privacy', '/'];
 
     const checkLegalAcceptance = async () => {
       try {
-        // If we're on a legal page, always allow access
-        if (legalPages.includes(pathname)) {
+        // If we're on a public page, always allow access
+        if (publicPages.includes(pathname)) {
           setHasAcceptedTerms(true);
           setIsLoading(false);
           return;

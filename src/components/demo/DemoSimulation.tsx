@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MdAutoAwesome, MdCheckCircle, MdInfo, MdLightbulb } from 'react-icons/md';
+import { MdAutoAwesome, MdCheckCircle, MdInfo, MdLightbulb, MdTimeline } from 'react-icons/md';
 import { FiActivity, FiCheckCircle } from 'react-icons/fi';
 import { emitCapyState } from '@/lib/capyState';
 
@@ -190,6 +190,7 @@ export default function DemoSimulation({
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showEpisodeView, setShowEpisodeView] = useState(false);
   const [showEpisodeTimeline, setShowEpisodeTimeline] = useState(false);
   const selectedEntry = selectedEntryProp || 'day3';
   const selectedEpisode = selectedEpisodeProp || 'demo-episode-1';
@@ -216,13 +217,13 @@ export default function DemoSimulation({
     }
   }, [showResults]);
 
-  // Automatically show timeline when results appear
+  // Automatically show timeline when episode view is shown
   useEffect(() => {
-    if (showResults) {
+    if (showEpisodeView) {
       setShowEpisodeTimeline(true);
       onShowEpisodeView?.(true);
     }
-  }, [showResults, onShowEpisodeView]);
+  }, [showEpisodeView, onShowEpisodeView]);
 
   const handleSymptomToggle = (symptomId: string) => {
     setSelectedSymptoms(prev =>
@@ -246,9 +247,14 @@ export default function DemoSimulation({
     // No longer transition to episode view - stay on results
   };
 
+  const handleViewEpisode = () => {
+    setShowEpisodeView(true);
+  };
+
   const handleReset = () => {
     setSelectedSymptoms([]);
     setShowResults(false);
+    setShowEpisodeView(false);
     setIsAnalyzing(false);
     setShowEpisodeTimeline(false);
     onEpisodeSelect?.('demo-episode-1', 'day3');
@@ -464,8 +470,8 @@ export default function DemoSimulation({
               </p>
             </div>
           </div>
-        ) : (
-          /* Demo Results - Entry Details (Newspaper Style) - keep above drawer */
+        ) : !showEpisodeView ? (
+          /* Demo Results - Full Analysis with View Episode Button */
           <div
             className='details-panel'
             style={{
@@ -503,7 +509,7 @@ export default function DemoSimulation({
                         letterSpacing: '0.1em',
                       }}
                     >
-                      Entry
+                      Analysis Results
                     </span>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                       •
@@ -548,37 +554,27 @@ export default function DemoSimulation({
                     {currentEntry.symptoms.join(' • ')}
                   </p>
                 </div>
-                <a
-                  href="/setup"
+                <button
+                  onClick={handleReset}
                   style={{
                     padding: '1rem 2rem',
-                    background: 'linear-gradient(135deg, var(--pastel-peach) 0%, var(--pastel-coral) 100%)',
-                    border: '3px solid var(--accent-coral)',
-                    borderRadius: '16px',
-                    color: 'var(--accent-coral)',
+                    background: 'white',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '12px',
+                    color: 'var(--text-secondary)',
                     fontSize: '1rem',
-                    fontWeight: '500',
+                    fontWeight: '400',
                     cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 6px 20px rgba(255, 117, 143, 0.4), 0 0 30px rgba(255, 117, 143, 0.3)',
-                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.5rem',
                     whiteSpace: 'nowrap',
                     alignSelf: 'flex-start'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 117, 143, 0.5), 0 0 40px rgba(255, 117, 143, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 117, 143, 0.4), 0 0 30px rgba(255, 117, 143, 0.3)';
-                  }}
                 >
-                  ← Back to Setup
-                </a>
+                  Reset Demo
+                </button>
               </div>
 
               {/* Flowing Two-Column Layout */}
@@ -926,6 +922,257 @@ export default function DemoSimulation({
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* View Episode Button */}
+              <div style={{
+                marginTop: '3rem',
+                paddingTop: '2rem',
+                borderTop: '2px solid #e5e7eb',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
+                alignItems: 'center'
+              }}>
+                <button
+                  onClick={handleViewEpisode}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    padding: '1.25rem 3rem',
+                    background: 'linear-gradient(135deg, var(--pastel-lavender) 0%, var(--pastel-lavender-dark) 100%)',
+                    border: '3px solid var(--accent-lavender)',
+                    borderRadius: '16px',
+                    color: 'var(--accent-lavender)',
+                    fontSize: '1.25rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 6px 20px rgba(157, 132, 183, 0.4)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(157, 132, 183, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(157, 132, 183, 0.4)';
+                  }}
+                >
+                  <MdTimeline size={28} />
+                  <span>View Episode Tracking</span>
+                </button>
+                <p style={{
+                  margin: 0,
+                  color: 'var(--text-muted)',
+                  fontSize: '0.9375rem',
+                  textAlign: 'center',
+                  maxWidth: '600px'
+                }}>
+                  See how the app tracks your symptoms over multiple days with episode timeline and trend analysis
+                </p>
+              </div>
+            </div>
+        ) : (
+          /* Episode View - Timeline and Entry Details */
+          <div
+            className='details-panel'
+            style={{
+              padding: '2.5rem 3rem',
+              background: 'white',
+              minHeight: '600px',
+              position: 'relative',
+              zIndex: 5
+            }}
+          >
+              {/* Header - Episode View */}
+              <div
+                style={{
+                  marginBottom: '3rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start'
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '400',
+                        color: 'var(--accent-pink)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                      }}
+                    >
+                      Episode Tracking
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      •
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Day {currentEntry.dayNumber}
+                    </span>
+                  </div>
+                  <h1
+                    style={{
+                      fontSize: '2.5rem',
+                      margin: 0,
+                      fontWeight: '400',
+                      color: 'var(--text-primary)',
+                      lineHeight: '1.2',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    {currentEpisode.title}
+                  </h1>
+                  <p
+                    style={{
+                      fontSize: '1.125rem',
+                      color: 'var(--text-muted)',
+                      margin: 0,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {currentEpisode.entries.length} entries • {currentEpisode.status}
+                  </p>
+                </div>
+                <button
+                  onClick={handleReset}
+                  style={{
+                    padding: '1rem 2rem',
+                    background: 'linear-gradient(135deg, var(--pastel-peach) 0%, var(--pastel-coral) 100%)',
+                    border: '3px solid var(--accent-coral)',
+                    borderRadius: '16px',
+                    color: 'var(--accent-coral)',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 6px 20px rgba(255, 117, 143, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    alignSelf: 'flex-start'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 117, 143, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 117, 143, 0.4)';
+                  }}
+                >
+                  ← Reset Demo
+                </button>
+              </div>
+
+              {/* Episode Summary and Timeline Info */}
+              <div style={{
+                background: 'var(--pastel-mint)',
+                border: '2px solid var(--pastel-mint-dark)',
+                borderRadius: '16px',
+                padding: '2rem',
+                marginBottom: '2rem',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+              }}>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: 'var(--accent-mint)',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <MdTimeline size={28} />
+                  Episode Overview
+                </h3>
+                <p style={{ margin: '0 0 1rem 0', lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
+                  {currentEpisode.aiSummary}
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span className={`severity-badge severity-${currentEpisode.severity}`}>
+                    {currentEpisode.severity}
+                  </span>
+                  <span style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    backgroundColor: currentEpisode.status === 'active' ? 'var(--pastel-yellow)' : 'var(--pastel-blue)',
+                    color: currentEpisode.status === 'active' ? 'var(--accent-yellow)' : 'var(--accent-blue)'
+                  }}>
+                    {currentEpisode.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Entry Timeline */}
+              <div>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: 'var(--text-primary)',
+                  marginBottom: '1.5rem'
+                }}>
+                  Timeline ({currentEpisode.entries.length} entries)
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {currentEpisode.entries.map((entry) => (
+                    <div
+                      key={entry.id}
+                      style={{
+                        background: entry.id === currentEntry.id ? 'var(--pastel-pink)' : 'white',
+                        border: `2px solid ${entry.id === currentEntry.id ? 'var(--pastel-pink-dark)' : '#e5e7eb'}`,
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        boxShadow: entry.id === currentEntry.id ? '0 4px 12px rgba(0, 0, 0, 0.08)' : 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                            Day {entry.dayNumber} • {formatDisplayDate(entry.date)}
+                          </div>
+                          <div style={{ fontSize: '1rem', fontWeight: '500', color: 'var(--text-primary)' }}>
+                            {entry.symptoms.join(', ')}
+                          </div>
+                        </div>
+                        <span className={`severity-badge severity-${entry.severity}`}>
+                          {entry.severity}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                        {entry.dailySummary}
+                      </p>
+                      {entry.trend && (
+                        <div style={{
+                          marginTop: '0.75rem',
+                          padding: '0.5rem 0.75rem',
+                          background: 'rgba(255, 255, 255, 0.6)',
+                          borderRadius: '8px',
+                          fontSize: '0.8125rem',
+                          color: 'var(--text-muted)'
+                        }}>
+                          Trend: <strong>{entry.trend}</strong>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
