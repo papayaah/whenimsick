@@ -24,7 +24,8 @@ The system uses Vercel AI SDK as the unified interface for all LLM providers, pr
   "@ai-sdk/anthropic": "^0.0.15", 
   "@ai-sdk/google": "^0.0.18",
   "@ai-sdk/cohere": "^0.0.10",
-  "@ai-sdk/mistral": "^0.0.8"
+  "@ai-sdk/mistral": "^0.0.8",
+  "@ai-sdk/xai": "^0.0.5"
 }
 ```
 
@@ -77,13 +78,21 @@ The system uses Vercel AI SDK as the unified interface for all LLM providers, pr
 
 ### Component Structure
 
-- **Enhanced Setup Page** (`src/app/setup/page.tsx`): AI provider selection with multiple LLM options at `/setup`
+**Application Integration**:
+- **Enhanced Setup Page** (`src/app/setup/page.tsx`): Uses `@whenimsick/ai-provider-selector` package
 - **Settings Page** (`src/app/settings/page.tsx`): AI configuration and usage statistics at `/settings`
 - **AI Settings Service** (`src/services/aiSettingsService.ts`): Manages API keys and provider preferences for all supported providers
 - **Cost Tracking Service** (`src/services/costTrackingService.ts`): Tracks API usage and calculates costs across different providers
 - **Unified AI Service** (`src/lib/ai-service.ts`): Uses Vercel AI SDK for custom providers, maintains existing Chrome AI and Shared Gemini
 - **Existing Gemini AI Service** (`src/lib/gemini-ai.ts`): UNCHANGED - continues to handle Shared Gemini API via Supabase
 - **Provider Adapters** (`src/lib/providers/`): Individual provider configurations for Vercel AI SDK (custom providers only)
+
+**Shareable Package Components** (`@whenimsick/ai-provider-selector`):
+- **AIProviderSelector**: Main component with provider cards and cost display
+- **ModelSelector**: Dropdown with real-time pricing for each model
+- **CostDisplay**: Cost transparency UI with estimates and comparisons
+- **useProviderPricing**: Hook for fetching and calculating pricing data
+- **useProviderValidation**: Hook for API key validation
 
 ## Components and Interfaces
 
@@ -105,15 +114,24 @@ The system uses Vercel AI SDK as the unified interface for all LLM providers, pr
   
   3. **Custom LLM Provider**
      - Badge: "Bring Your Own Key"
-     - Provider dropdown (OpenAI, Anthropic, Google, Cohere, Mistral)
-     - Model selection for chosen provider
+     - Provider dropdown (OpenAI, Anthropic, Google, Cohere, Mistral, xAI)
+     - Model selection for chosen provider with **real-time pricing display**
+     - **Cost Preview**: Shows estimated cost per symptom analysis (e.g., "~$0.002 per analysis")
+     - **Pricing Comparison**: Side-by-side cost comparison when hovering over models
      - API key input field
      - Validation feedback
-     - Cost tracking notice with provider-specific pricing
+     - **Cost tracking notice**: "Usage and costs will be tracked locally for your reference"
+
+**Cost Transparency Features**:
+- **Real-time Pricing**: Each model shows cost per 1M tokens (input/output) 
+- **Estimated Cost per Analysis**: Shows approximate cost for typical symptom analysis (~200-500 tokens)
+- **Cost Comparison**: Visual indicators showing relative cost (💰 Budget, 💰💰 Standard, 💰💰💰 Premium)
+- **Monthly Estimate**: "Based on 10 analyses/month: ~$0.20"
+- **No Surprises**: Clear upfront pricing before API key entry
 
 **Interface**:
 ```typescript
-type LLMProvider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral';
+type LLMProvider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'xai';
 type AIProviderType = 'chrome' | 'gemini-shared' | 'custom-llm';
 
 interface AIProviderOption {
@@ -135,12 +153,55 @@ interface CustomLLMConfig {
 interface SetupState {
   selectedProvider: AIProviderType | null;
   customLLMConfig: CustomLLMConfig;
-  availableModels: Record<LLMProvider, string[]>;
+  availableModels: Record<LLMProvider, ModelInfo[]>;
   isValidating: boolean;
   validationError: string | null;
   isInitializing: boolean;
+  showCostComparison: boolean;
+}
+
+interface ModelInfo {
+  id: string;
+  name: string;
+  description: string;
+  pricing: {
+    inputCostPer1M: number;
+    outputCostPer1M: number;
+    estimatedCostPerAnalysis: number;
+    costTier: 'budget' | 'standard' | 'premium';
+  };
+  contextLength: number;
+  recommended?: boolean;
 }
 ```
+
+### 1.1. Cost Display UI Components
+
+**Model Selection with Pricing**:
+```typescript
+interface ModelSelectionProps {
+  provider: LLMProvider;
+  models: ModelInfo[];
+  selectedModel: string;
+  onModelSelect: (modelId: string) => void;
+  showPricing: boolean;
+}
+
+// Example UI for each model option:
+// ┌─────────────────────────────────────────────┐
+// │ GPT-4.1 Mini                    💰💰 Standard │
+// │ Fast and efficient for most tasks           │
+// │ $0.80/1M input • $3.20/1M output           │
+// │ ~$0.002 per symptom analysis               │
+// │ Est. $0.20/month (10 analyses)             │
+// └─────────────────────────────────────────────┘
+```
+
+**Cost Comparison Modal**:
+- Side-by-side comparison of all models for selected provider
+- Sortable by cost, performance, or popularity
+- "Best Value" and "Most Popular" badges
+- Monthly cost estimates based on usage patterns
 
 ### 2. Settings Page Component
 
@@ -264,13 +325,54 @@ class CostTrackingService {
 }
 ```
 
-**Provider Pricing Models** (as of 2024):
-- **OpenAI GPT-4**: Input $0.03/1K, Output $0.06/1K tokens
-- **OpenAI GPT-3.5**: Input $0.0015/1K, Output $0.002/1K tokens  
-- **Anthropic Claude 3.5**: Input $0.003/1K, Output $0.015/1K tokens
-- **Google Gemini Pro**: Input $0.00025/1K, Output $0.0005/1K tokens
+**Provider Pricing Models** (as of December 2024):
+
+**Google Gemini Models:**
+- **Gemini 2.5 Pro**: Input $1.25/1M (≤200k), $2.50/1M (>200k) | Output $10.00/1M (≤200k), $15.00/1M (>200k)
+- **Gemini 2.5 Flash**: Input $0.30/1M | Output $2.50/1M
+- **Gemini 2.5 Flash-Lite**: Input $0.10/1M | Output $0.40/1M
+- **Gemini 2.0 Flash**: Input $0.10/1M | Output $0.40/1M
+- **Gemini 2.0 Flash-Lite**: Input $0.075/1M | Output $0.30/1M
+
+**OpenAI Models:**
+- **GPT-5.2**: Input $1.75/1M | Output $14.00/1M | Cached Input $0.175/1M
+- **GPT-5.2 Pro**: Input $21.00/1M | Output $168.00/1M
+- **GPT-5 Mini**: Input $0.25/1M | Output $2.00/1M | Cached Input $0.025/1M
+- **GPT-4.1**: Input $3.00/1M | Output $12.00/1M | Cached Input $0.75/1M
+- **GPT-4.1 Mini**: Input $0.80/1M | Output $3.20/1M | Cached Input $0.20/1M
+- **GPT-4.1 Nano**: Input $0.20/1M | Output $0.80/1M | Cached Input $0.05/1M
+
+**Anthropic Claude Models:**
+- **Claude Opus 4.5**: Input $5.00/1M | Output $25.00/1M
+- **Claude Opus 4.1**: Input $15.00/1M | Output $75.00/1M
+- **Claude Sonnet 4.5**: Input $3.00/1M | Output $15.00/1M
+- **Claude Sonnet 4**: Input $3.00/1M | Output $15.00/1M
+- **Claude Haiku 4.5**: Input $1.00/1M | Output $5.00/1M
+- **Claude Haiku 3.5**: Input $0.80/1M | Output $4.00/1M
+
+**Perplexity Models:**
+- **Sonar**: Input $1.00/1M | Output $1.00/1M | Request Fee $5-12/1K (context dependent)
+- **Sonar Pro**: Input $3.00/1M | Output $15.00/1M | Request Fee $6-14/1K (context dependent)
+- **Sonar Reasoning**: Input $1.00/1M | Output $5.00/1M | Request Fee $5-12/1K (context dependent)
+- **Sonar Reasoning Pro**: Input $2.00/1M | Output $8.00/1M | Request Fee $6-14/1K (context dependent)
+
+**Mistral Models:**
+- **Mistral Large**: Input $2.00/1M | Output $6.00/1M
+- **Mistral Small**: Input $0.20/1M | Output $0.60/1M
+- **Mistral Nemo**: Input $0.15/1M | Output $0.15/1M
+- **Mistral 7B**: Input $0.25/1M | Output $0.25/1M
+
+**xAI Grok Models:**
+- **Grok 4.1 Fast Reasoning**: Input $0.20/1M | Output $0.50/1M
+- **Grok 4 Fast Reasoning**: Input $0.20/1M | Output $0.50/1M
+- **Grok 4 0709**: Input $3.00/1M | Output $15.00/1M
+- **Grok 3 Mini**: Input $0.30/1M | Output $0.50/1M
+- **Grok 3**: Input $3.00/1M | Output $15.00/1M
+
+**Other Providers** (pricing to be updated):
 - **Cohere Command**: Input $0.0015/1K, Output $0.002/1K tokens
-- **Note**: Pricing automatically updated and configurable per provider
+
+**Note**: Pricing automatically updated and configurable per provider. Google pricing includes free tier limits and context caching options.
 
 **Storage Structure**:
 ```typescript
@@ -418,7 +520,7 @@ if (currentProvider === 'gemini-custom' && customApiKey) {
 
 ```typescript
 type AIProviderType = 'chrome' | 'gemini-shared' | 'custom-llm';
-type LLMProvider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral';
+type LLMProvider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'xai';
 
 interface AIProviderConfig {
   type: AIProviderType;
@@ -573,6 +675,364 @@ interface ModelInfo {
 - Settings page functionality
 - Usage statistics display
 - Rate limiting enforcement
+
+## NPM Package Architecture
+
+### Shareable React Component Package
+
+**Package Name Analysis: "Kit" vs "Toolkit"**
+
+| Aspect | "Kit" | "Toolkit" |
+|--------|-------|-----------|
+| **Perception** | Simple, basic | Comprehensive, professional |
+| **Scope** | Single-purpose | Multi-purpose, expandable |
+| **Examples** | `ui-kit`, `starter-kit` | `developer-toolkit`, `design-toolkit` |
+| **Implication** | Collection of components | Complete solution with tools |
+| **Future Growth** | Limited expansion | Room for more features |
+
+**Package Name Options**:
+- **`react-ai-toolkit`** ⭐⭐⭐ (Comprehensive, professional, room to grow)
+- **`@react-ai/toolkit`** ⭐⭐⭐ (Scoped, ecosystem-ready)
+- **`react-ai-kit`** ⭐⭐ (Simple, focused, but limiting)
+- **`react-llm-toolkit`** ⭐⭐ (LLM-specific)
+- **`react-ai-provider`** ⭐⭐ (Simple, clear)
+
+**Chosen**: `react-ai-toolkit` - Suggests a complete solution with room for expansion
+
+**Minimal Package Structure**:
+```
+react-ai-toolkit/
+├── src/
+│   ├── components/
+│   │   ├── AIProviderSelector.tsx    # Main component
+│   │   ├── ModelSelector.tsx         # Model selection with pricing
+│   │   ├── CostDisplay.tsx          # Cost transparency UI
+│   │   └── ChromeAIStatus.tsx       # Chrome AI availability display
+│   ├── hooks/
+│   │   ├── useProviderPricing.ts    # Pricing data hook
+│   │   ├── useProviderValidation.ts # API key validation
+│   │   ├── useChromeAI.ts          # Chrome AI availability & usage
+│   │   └── useAIService.ts         # Unified AI service hook
+│   ├── lib/
+│   │   ├── chrome-ai.ts            # Chrome AI implementation (from WhenImSick)
+│   │   ├── vercel-providers.ts     # Vercel AI SDK integrations
+│   │   └── ai-service.ts           # Unified service layer
+│   ├── utils/
+│   │   ├── pricing.ts              # Pricing calculations
+│   │   └── providers.ts            # Provider configurations
+│   ├── types/
+│   │   └── index.ts                # TypeScript definitions
+│   └── index.ts                    # Main export
+├── package.json
+├── tsconfig.json
+├── rollup.config.js                # Build configuration
+└── README.md
+```
+
+**Key Features**:
+- **Zero Dependencies**: No external UI libraries (pure React + CSS)
+- **TypeScript First**: Full type safety
+- **Tree Shakeable**: Import only what you need
+- **Framework Agnostic**: Works with Next.js, Vite, CRA
+- **Customizable**: CSS variables for theming
+- **Lightweight**: < 50KB bundled
+
+**Unified Interface for Third Parties**:
+
+```typescript
+// Main component interface
+export interface AIProviderSelectorProps {
+  onProviderSelect: (config: AIProviderConfig) => void;
+  onValidationComplete?: (isValid: boolean, provider: string) => void;
+  onCostEstimate?: (estimate: CostEstimate) => void;
+  defaultProvider?: AIProviderType;
+  showCostComparison?: boolean;
+  enabledProviders?: LLMProvider[]; // Allow filtering providers
+  customPricing?: Partial<Record<LLMProvider, CustomPricingModel>>;
+  theme?: 'light' | 'dark' | 'auto';
+  className?: string;
+  storage?: StorageAdapter; // Custom storage implementation
+}
+
+// Hooks for external usage
+export const useAIProviderConfig: () => {
+  config: AIProviderConfig | null;
+  setConfig: (config: AIProviderConfig) => void;
+  clearConfig: () => void;
+  isValid: boolean;
+};
+
+export const useChromeAI: () => {
+  isAvailable: boolean;
+  status: ChromeAIStatus;
+  checkAvailability: () => Promise<ChromeAIStatus>;
+  analyzeSymptoms: (symptoms: string[], notes?: string) => Promise<AnalysisResult>;
+  isInitialized: boolean;
+};
+
+export const useAIService: () => {
+  analyzeSymptoms: (symptoms: string[], notes?: string, provider?: AIProviderConfig) => Promise<AnalysisResult>;
+  currentProvider: AIProviderType;
+  switchProvider: (config: AIProviderConfig) => Promise<boolean>;
+  isReady: boolean;
+};
+
+export const useProviderPricing: (provider?: LLMProvider) => {
+  pricing: PricingModel[];
+  estimateCost: (inputTokens: number, outputTokens: number, model: string) => number;
+  compareProviders: (models: string[]) => CostComparison[];
+  loading: boolean;
+};
+
+export const useProviderValidation: () => {
+  validateApiKey: (provider: LLMProvider, apiKey: string) => Promise<ValidationResult>;
+  testConnection: (config: AIProviderConfig) => Promise<boolean>;
+  isValidating: boolean;
+  lastError: string | null;
+};
+
+export const useCostTracking: () => {
+  recordUsage: (provider: LLMProvider, model: string, tokens: TokenUsage) => void;
+  getUsageStats: () => UsageStats;
+  resetStats: (provider?: LLMProvider) => void;
+  totalCost: number;
+  monthlyEstimate: number;
+};
+
+// Storage adapter interface for custom implementations
+export interface StorageAdapter {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+}
+
+// Utility functions
+export const createVercelAIConfig: (config: AIProviderConfig) => VercelAIConfig;
+export const validateProviderConfig: (config: AIProviderConfig) => ValidationResult;
+export const calculateMonthlyCost: (usage: UsageStats, analysesPerMonth: number) => number;
+```
+
+**Usage Examples for Third Parties**:
+
+**1. Basic Integration (Any React App)**:
+```tsx
+import { AIProviderSelector, useAIProviderConfig } from '@whenimsick/ai-provider-selector';
+
+function MyApp() {
+  const { config, setConfig } = useAIProviderConfig();
+
+  return (
+    <div>
+      <h1>Choose Your AI Provider</h1>
+      <AIProviderSelector
+        onProviderSelect={setConfig}
+        enabledProviders={['openai', 'anthropic', 'google']} // Filter providers
+        showCostComparison={true}
+        theme="auto"
+      />
+      
+      {config && (
+        <div>Selected: {config.provider} - {config.model}</div>
+      )}
+    </div>
+  );
+}
+```
+
+**2. Custom Storage (Non-LocalStorage)**:
+```tsx
+import { AIProviderSelector, StorageAdapter } from '@whenimsick/ai-provider-selector';
+
+// Custom storage for server-side or database storage
+const customStorage: StorageAdapter = {
+  getItem: (key) => myDatabase.get(key),
+  setItem: (key, value) => myDatabase.set(key, value),
+  removeItem: (key) => myDatabase.delete(key)
+};
+
+function EnterpriseApp() {
+  return (
+    <AIProviderSelector
+      storage={customStorage}
+      onProviderSelect={(config) => {
+        // Save to your backend
+        fetch('/api/ai-config', { 
+          method: 'POST', 
+          body: JSON.stringify(config) 
+        });
+      }}
+    />
+  );
+}
+```
+
+**3. Headless Usage (Hooks Only)**:
+```tsx
+import { 
+  useProviderPricing, 
+  useProviderValidation,
+  useCostTracking 
+} from '@whenimsick/ai-provider-selector';
+
+function CustomAISettings() {
+  const { pricing, estimateCost } = useProviderPricing('openai');
+  const { validateApiKey, isValidating } = useProviderValidation();
+  const { recordUsage, totalCost } = useCostTracking();
+
+  const handleApiKeySubmit = async (apiKey: string) => {
+    const result = await validateApiKey('openai', apiKey);
+    if (result.isValid) {
+      // Use your own UI/logic
+      console.log('Valid API key!');
+    }
+  };
+
+  return (
+    <div>
+      {/* Your custom UI */}
+      <p>Estimated cost: ${estimateCost(1000, 2000, 'gpt-4')}</p>
+      <p>Total spent: ${totalCost}</p>
+    </div>
+  );
+}
+```
+
+**4. Integration with Vercel AI SDK**:
+```tsx
+import { createVercelAIConfig, useAIProviderConfig } from '@whenimsick/ai-provider-selector';
+import { generateText } from 'ai';
+
+function AIChat() {
+  const { config } = useAIProviderConfig();
+
+  const sendMessage = async (message: string) => {
+    if (!config) return;
+
+    const aiConfig = createVercelAIConfig(config);
+    const result = await generateText({
+      model: aiConfig.model,
+      prompt: message,
+    });
+
+    return result.text;
+  };
+
+  return (
+    <div>
+      {/* Your chat UI */}
+    </div>
+  );
+}
+```
+
+**5. Custom Pricing Override**:
+```tsx
+import { AIProviderSelector } from 'react-ai-toolkit';
+
+function CustomPricingApp() {
+  const customPricing = {
+    openai: {
+      'gpt-4': { inputCostPer1M: 25.00, outputCostPer1M: 100.00 }, // Enterprise pricing
+      'gpt-3.5-turbo': { inputCostPer1M: 1.00, outputCostPer1M: 2.00 }
+    }
+  };
+
+  return (
+    <AIProviderSelector
+      customPricing={customPricing}
+      onCostEstimate={(estimate) => {
+        console.log('Monthly estimate:', estimate.monthlyEstimate);
+      }}
+    />
+  );
+}
+```
+
+**Complete Type Definitions for Third Parties**:
+```typescript
+// Core types that third parties can use
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'xai';
+export type AIProviderType = 'chrome' | 'gemini-shared' | 'custom-llm';
+
+export interface AIProviderConfig {
+  type: AIProviderType;
+  provider?: LLMProvider;
+  model?: string;
+  apiKey?: string;
+  customEndpoint?: string;
+}
+
+export interface PricingModel {
+  inputCostPer1M: number;
+  outputCostPer1M: number;
+  currency: string;
+  contextLength?: number;
+}
+
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+export interface CostEstimate {
+  perAnalysis: number;
+  monthlyEstimate: number;
+  provider: LLMProvider;
+  model: string;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+  availableModels?: string[];
+}
+
+export interface UsageStats {
+  totalCalls: number;
+  totalCost: number;
+  byProvider: Record<LLMProvider, ProviderUsageStats>;
+}
+
+// Vercel AI SDK integration helper
+export interface VercelAIConfig {
+  model: any; // Vercel AI model instance
+  apiKey: string;
+  baseURL?: string;
+}
+```
+
+**Package.json Configuration**:
+```json
+{
+  "name": "react-ai-toolkit",
+  "version": "1.0.0",
+  "description": "React component for AI provider selection with cost transparency",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "keywords": ["react", "ai", "llm", "openai", "anthropic", "cost-tracking"],
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "optionalDependencies": {
+    "ai": "^3.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.0.0",
+    "rollup": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+```
+
+**Build Process**:
+- **Rollup**: Bundle for multiple formats (CJS, ESM, UMD)
+- **TypeScript**: Generate type definitions
+- **CSS**: Inline styles with CSS variables for theming
+- **Size Optimization**: Tree shaking and minification
 
 ## Future Enhancements
 
